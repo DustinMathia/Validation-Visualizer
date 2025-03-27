@@ -10,7 +10,6 @@ import io
 import layout
 import utils
 
-
 app = Dash(__name__)
 app.layout = layout.layout  # Assign the layout from layout.py
 
