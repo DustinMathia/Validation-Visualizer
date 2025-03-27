@@ -308,4 +308,4 @@ def update_graph(stored_data, fitted_params, selected_file, selected_column, pos
 
 
 if __name__ == '__main__':
-  app.run(debug=true)
+  app.run(debug=True)
