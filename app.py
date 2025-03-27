@@ -11,8 +11,8 @@ import layout
 import utils
 
 
-
-app = Dash()
+app = dash.Dash(__name__)
+app.layout = layout.layout  # Assign the layout from layout.py
 
 colors = {
     'background': '#FFFFFF',
