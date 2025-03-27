@@ -5,7 +5,7 @@ colors = {
     'text': '#2E2D29'
 }
 
-app.layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # Use Calibri for now per recommended by stanford site
+layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # Use Calibri for now per recommended by stanford site
     html.H1(
         children='Hello Dash',
         style={
