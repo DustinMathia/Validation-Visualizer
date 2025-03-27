@@ -74,8 +74,8 @@ def store_file(list_of_contents, list_of_filenames):
                                 names=header, missing_values='', filling_values=0)
 
             #Manipulate data
-            manipulated_data = manipulate_data(data, header)
-            fitted_data = fit_params(manipulated_data)
+            manipulated_data = utils.manipulate_data(data, header)
+            fitted_data = utils.fit_params(manipulated_data)
             # Convert NumPy structured array to list of dictionaries
             # data_list = []
             # for row in data:
@@ -224,7 +224,7 @@ def update_graph(stored_data, fitted_params, selected_file, selected_column, pos
     parameter_data = fitted_params.get(selected_file, {}).get(selected_column)
     if column_data and parameter_data and pos_fit_dist and neg_fit_dist:
       fig = go.Figure()
-      bin_edges = calculate_bin_edges(column_data, range_value, selected_traces)
+      bin_edges = utils.calculate_bin_edges(column_data, range_value, selected_traces)
       positive_hist, positive_bin_edges = np.histogram(column_data['positive']['data'], bins=bin_edges, range=range_value)
       negative_hist, negative_bin_edges = np.histogram(column_data['negative']['data'], bins=bin_edges, range=range_value)
       unknown_hist, unknown_bin_edges   = np.histogram(column_data['unknown']['data'],  bins=bin_edges, range=range_value)
