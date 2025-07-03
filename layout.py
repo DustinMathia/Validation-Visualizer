@@ -145,6 +145,8 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
         id='graph'
     ),
 
+html.Div([
+    html.Button('Reset', id='range-reset'),
     dcc.RangeSlider(
         id='range-slider',
         #updatemode='drag',
@@ -152,8 +154,11 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
         min=0,
         max=100,
         value=[0, 100]
-    ),
+    )
+    ]),
 
+html.Div([
+    html.Button('Auto', id='auto-slide'),
     dcc.Slider(
         id='slider-position',
         #updatemode='drag',
@@ -161,7 +166,8 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
         min=0,
         max=100,
         value=0
-    ),
+    )
+    ]),
 
 
     #### dcc.Store Debugger ####
