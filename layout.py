@@ -78,7 +78,8 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
         html.Div([
             html.Label('Positive Stat Fit: ', htmlFor='pos-statfit-select'),
             dcc.Dropdown(
-                options=[{'label': 'Normal', 'value': 'norm'},
+                options=[{'label': 'None', 'value': 'none'},
+                         {'label': 'Normal', 'value': 'norm'},
                          {'label': 'Exponential', 'value': 'expon'},
                          {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
                 value='norm',
@@ -87,7 +88,8 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
             ),
             html.Label('Negative Stat Fit: ', htmlFor='neg-statfit-select'),
             dcc.Dropdown(
-                options=[{'label': 'Normal', 'value': 'norm'},
+                options=[{'label': 'None', 'value': 'none'},
+                         {'label': 'Normal', 'value': 'norm'},
                          {'label': 'Exponential', 'value': 'expon'},
                          {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
                 value='norm',

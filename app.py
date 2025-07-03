@@ -1,6 +1,7 @@
 from logging import error
 from dash import Dash, dcc, html, Input, Output, callback, Input, Output, State, ctx
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import numpy as np
 from scipy import stats
 import pandas as pd
@@ -224,6 +225,10 @@ def update_graph(stored_data, fitted_params, selected_file, selected_column, pos
     parameter_data = fitted_params.get(selected_file, {}).get(selected_column)
     if column_data and parameter_data and pos_fit_dist and neg_fit_dist:
       fig = go.Figure()
+
+      fig2 = make_subplots(rows=2, cols=2, row_heights=[0.93, 0.07], shared_xaxes= "columns",vertical_spacing=0.01,specs=[[{"secondary_y": True}, {"type": "xy"}], [{"type": "xy"}, None]])
+
+
       bin_edges = utils.calculate_bin_edges(column_data, range_value, selected_traces)
       positive_hist, positive_bin_edges = np.histogram(column_data['positive']['data'], bins=bin_edges, range=range_value)
       negative_hist, negative_bin_edges = np.histogram(column_data['negative']['data'], bins=bin_edges, range=range_value)
@@ -240,19 +245,28 @@ def update_graph(stored_data, fitted_params, selected_file, selected_column, pos
       # Graph np bins depending on graph type
       if chart_type == 'Line':
         if 'Positive' in selected_traces:
-          pos_params = parameter_data['positive'][pos_fit_dist]
-          # Create distribution object
-          positive_dist = getattr(stats, pos_fit_dist)
-          x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
-          positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
-          fig.add_trace(go.Scatter(x=x_range_for_pdf, y=positive_pdf, mode='lines', name='Positives', line_color='red')) #y=positive_hist
+          if pos_fit_dist == 'none':
+              fig2.add_trace(go.Scatter(x=positive_bar_center, y=positive_hist, mode='lines', name='Positives', line_color='red'), row=1, col=1, secondary_y=True)
+          else:
+              pos_params = parameter_data['positive'][pos_fit_dist]
+              # Create distribution object
+              positive_dist = getattr(stats, pos_fit_dist)
+              x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
+              positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
+              fig.add_trace(go.Scatter(x=x_range_for_pdf, y=positive_pdf, mode='lines', name='Positives', line_color='red')) #y=positive_hist
+              fig2.add_trace(go.Scatter(x=x_range_for_pdf, y=positive_pdf, mode='lines', name='Positives', line_color='red'), row=1, col=1, secondary_y=True) #y=positive_hist
+
         if 'Negative' in selected_traces:
-          neg_params = parameter_data['negative'][neg_fit_dist]
-          # Create distribution object
-          negative_dist = getattr(stats, neg_fit_dist)
-          x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
-          negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
-          fig.add_trace(go.Scatter(x=x_range_for_pdf, y=negative_pdf, mode='lines', name='Negatives', line_color='green')) #y=negative_hist
+          if neg_fit_dist == 'none':
+               fig2.add_trace(go.Scatter(x=negative_bar_center, y=negative_hist, mode='lines', name='Positives', line_color='green'), row=1, col=1, secondary_y=True)
+          else:
+               neg_params = parameter_data['negative'][neg_fit_dist]
+               # Create distribution object
+               negative_dist = getattr(stats, neg_fit_dist)
+               x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
+               negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
+               fig.add_trace(go.Scatter(x=x_range_for_pdf, y=negative_pdf, mode='lines', name='Negatives', line_color='green')) #y=negative_hist
+               fig2.add_trace(go.Scatter(x=x_range_for_pdf, y=negative_pdf, mode='lines', name='Negatives', line_color='green'), row=1, col=1, secondary_y=True) #y=negative_hist
         #if 'Unknown' in selected_traces:
          # fig.add_trace(go.Scatter(x=unknown_bar_center,  y=unknown_hist, mode='lines', name='Unknown', line_color='gray', yaxis='y2'))
 
@@ -260,22 +274,66 @@ def update_graph(stored_data, fitted_params, selected_file, selected_column, pos
         # Graph Bars
         if 'Positive' in selected_traces:
           fig.add_trace(go.Bar(x=positive_bar_center, y=positive_hist, name='Positives', marker_color='red', width=positive_bar_widths))
+          fig2.add_trace(go.Bar(x=positive_bar_center, y=positive_hist, name='Positives', marker_color='red', width=positive_bar_widths), row=1, col=1, secondary_y=True)
+
+
+
+
         if 'Negative' in selected_traces:
           fig.add_trace(go.Bar(x=negative_bar_center, y=negative_hist, name='Negatives', marker_color='green',  width=negative_bar_widths))
+          fig2.add_trace(go.Bar(x=negative_bar_center, y=negative_hist, name='Negatives', marker_color='green',  width=negative_bar_widths), row=1, col=1, secondary_y=True)
+
+
+
         #if 'Unknown' in selected_traces:
          # fig.add_trace(go.Bar(x=unknown_bar_center, y=unknown_hist, name='Unknown', marker_color='gray', width=unknown_bar_widths, yaxis='y2'))
 
       if 'Unknown' in selected_traces:
         if unknown_chart == 'Histogram':
           fig.add_trace(go.Bar(x=unknown_bar_center, y=unknown_hist, name='Unknown', marker_color='gray', width=unknown_bar_widths, yaxis='y2'))
+          fig2.add_trace(go.Bar(x=unknown_bar_center, y=unknown_hist, name='Unknown', marker_color='gray', width=unknown_bar_widths), row=1, col=1, secondary_y=False)
+
+
         if unknown_chart == 'Line':
           fig.add_trace(go.Scatter(x=unknown_bar_center, y=unknown_hist, mode='lines', name='Unknown', line_color='gray', yaxis='y2'))
+          fig2.add_trace(go.Scatter(x=unknown_bar_center, y=unknown_hist, mode='lines', name='Unknown', line_color='gray'), row=1, col=1, secondary_y=True)
+
+      fig2.add_trace(go.Box( #positive points  #draw original data points in boxplot below x axis
+          x=column_data['positive']['data'],
+          marker_symbol='line-ns-open',
+          marker_color='red',
+          boxpoints='all',
+          jitter=1,
+          fillcolor='rgba(255,255,255,0)',
+          line_color='rgba(255,255,255,0)',
+          hoveron='points',
+          showlegend=False
+          ), row=2, col=1)   
+
+      fig2.add_trace(go.Box( #negative points  #draw original data points in boxplot below x axis
+          x=column_data['negative']['data'],
+          marker_symbol='line-ns-open',
+          marker_color='green',
+          boxpoints='all',
+          jitter=1,
+          fillcolor='rgba(255,255,255,0)',
+          line_color='rgba(255,255,255,0)',
+          hoveron='points',
+          showlegend=False
+          ), row=2, col=1)          
 
 
       #Add vertical cutoff line
       fig.add_vline(x=pos_x, line_width=3, line_dash="dashdot", line_color="orange",
                     annotation_text=pos_x, annotation_position="top",  # Position above the line
                     annotation_font=dict(size=18)) # Customize font
+      fig2.add_vline(x=pos_x, line_width=3, line_dash="dashdot", line_color="orange",
+                    annotation_text=pos_x, annotation_position="top",  # Position above the line
+                    annotation_font=dict(size=18), row=1, col=1) # Customize font
+
+
+
+
 
       fig.update_layout(
         yaxis={
@@ -301,7 +359,13 @@ def update_graph(stored_data, fitted_params, selected_file, selected_column, pos
       fig.update_yaxes(showgrid=True)
       fig.update_traces(opacity=0.75)
 
-      return fig
+
+      fig2.update_yaxes(showticklabels=False, row=2, col=1)
+      fig2.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
+      fig2.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
+
+      #return fig
+      return fig2
   else:
     return go.Figure()
 
