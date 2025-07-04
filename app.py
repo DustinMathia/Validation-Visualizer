@@ -296,7 +296,7 @@ def update_graph(stored_data, fitted_params, selected_file, selected_column, pos
 
         if unknown_chart == 'Line':
           fig.add_trace(go.Scatter(x=unknown_bar_center, y=unknown_hist, mode='lines', name='Unknown', line_color='gray', yaxis='y2'))
-          fig2.add_trace(go.Scatter(x=unknown_bar_center, y=unknown_hist, mode='lines', name='Unknown', line_color='gray'), row=1, col=1, secondary_y=True)
+          fig2.add_trace(go.Scatter(x=unknown_bar_center, y=unknown_hist, mode='lines', name='Unknown', line_color='gray'), row=1, col=1, secondary_y=False)
 
       fig2.add_trace(go.Box( #positive points  #draw original data points in boxplot below x axis
           x=column_data['positive']['data'],
