@@ -26,18 +26,21 @@ colors = {
 @app.callback(
         Output('output-data', 'children'),  # Output to display the data
         Output('output-params', 'children'),  # Output to store the data
+        Output('output-roc', 'children'),
         Input('stored-data', 'data'),  # Input from the Store component
-        Input('fit-params', 'data') #view params
+        Input('fit-params', 'data'), #view params
+        Input('roc_curves', 'data')
     )
-def display_stored_data(stored_data, fitted_params):
-        if stored_data and fitted_params:
+def display_stored_data(stored_data, fitted_params, roc_curves):
+        if stored_data and fitted_params and roc_curves:
             # Convert the data to a readable format (e.g., string)
             data_string_data = str(stored_data)
             data_string_params = str(fitted_params)
+            data_string_roc = str(roc_curves)
             # Return the data string
-            return data_string_data, data_string_params
+            return data_string_data, data_string_params, data_string_roc
         else:
-            return "No data stored yet."
+            return "No data stored yet.", "No parameters stored yet.", "No ROC data stored yet."
 
 ##################################
 
@@ -48,6 +51,7 @@ def display_stored_data(stored_data, fitted_params):
 @callback(
     Output('stored-data', 'data', allow_duplicate=True),  # Output to store the data
     Output('fit-params', 'data'),  # Output to store the data
+    Output('roc_curves', 'data'),
     Output('error-message', 'children'),  # Output to display the error
     Input('upload-data', 'contents'),  # Input from the upload component
     State('upload-data', 'filename'),  # State to get the filename
@@ -58,6 +62,7 @@ def store_file(list_of_contents, list_of_filenames):
       # Dictionary to store all file data
       all_files_data = {}
       all_files_fit_params = {}
+      all_files_roc = {}
 
       for content, filename in zip(list_of_contents, list_of_filenames):
         if isinstance(content, str):  # Check if content is a string
@@ -76,6 +81,13 @@ def store_file(list_of_contents, list_of_filenames):
 
             #Manipulate data
             manipulated_data = utils.manipulate_data(data, header)
+
+            #make roc curve
+            roc_columns = {}
+            for column in manipulated_data:
+              roc_columns[column] = utils.make_roc_curve(manipulated_data[column]['positive']['data'], manipulated_data[column]['negative']['data'], manipulated_data[column]['unknown']['data'])
+
+
             fitted_data = utils.fit_params(manipulated_data)
             # Convert NumPy structured array to list of dictionaries
             # data_list = []
@@ -84,18 +96,19 @@ def store_file(list_of_contents, list_of_filenames):
 
             all_files_data[filename] = manipulated_data
             all_files_fit_params[filename] = fitted_data
+            all_files_roc[filename] = roc_columns
 
           except Exception as e:
               error_message = f"Error processing file: {e}"
               print(error_message)
-              return None, None, html.Div(error_message, style={'color': 'red'})
+              return None, None, None, html.Div(error_message, style={'color': 'red'})
         else:
           error_message = "Invalid content type"
           print(error_message)
-          return None, None, html.Div(error_message, style={'color': 'red'})
+          return None, None, None, html.Div(error_message, style={'color': 'red'})
       # Return the dictionary containing all file data
-      return all_files_data, all_files_fit_params, html.Div("No Error Uploading File", style={'color': 'green'})
-    return None, None, html.Div("No File Uploaded", style={'color': 'green'})
+      return all_files_data, all_files_fit_params, all_files_roc, html.Div("No Error Uploading File", style={'color': 'green'})
+    return None, None, None, html.Div("No File Uploaded", style={'color': 'green'})
 
 # Callback to select uploaded files
 @app.callback(
@@ -200,6 +213,23 @@ def update_slider_range(selected_range):
 #         # Update the line's x and y data based on pos_x
 #         return dict(x=[[pos_x]], y=[[pos_x]]), [0]
 #     return {},[] # This means no extension, do nothing.
+
+
+# display roc curve
+@app.callback(
+    Output('graph_roc', 'figure'),
+    Input('roc_curves', 'data'),
+    Input('file-select', 'value'),
+    Input('column-select', 'value'),
+    prevent_initial_call=True
+)
+def update_roc_curve(roc_data, selected_file, selected_column):
+  if roc_data and selected_file and selected_column:
+    roc_column = roc_data.get(selected_file, {}).get(selected_column)
+    if roc_column:
+      fig_roc = utils.plot_roc(roc_column['TPR'], roc_column['FPR'])
+      return fig_roc
+  return go.Figure()
 
 
 

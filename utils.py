@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import stats
+import plotly.graph_objects as go
 
 def manipulate_data(data_list, column_names):
   manipulated_data = {}
@@ -69,3 +70,102 @@ def fit_params(file_data):
               }
   return fitted_data
 
+
+def make_roc_curve(positive_data, negative_data, unknown_data):  # view confusion matrix chart @ https://en.wikipedia.org/wiki/Receiver_operating_characteristic
+  total_positive = len(positive_data)
+  total_negative = len(negative_data)
+  total_unknown  = len(unknown_data)
+
+  # make list of formated data values: tuple (value, True/False)
+  positive_data = [(value, True) for value in positive_data]
+  negative_data = [(value, False) for value in negative_data]
+  unknown_data  = [(value, None) for value in unknown_data]
+
+  #create a sorted master list of all categories
+  population_data = sorted(positive_data + negative_data + unknown_data, key=lambda x: x[0])
+
+  # accumulation for each population at index
+  accumulated_positive = []
+  accumulated_negative = []
+  accumulated_unknown = []
+
+  current_positive = 0
+  current_negative = 0
+  current_unknown = 0
+
+  for value, label in population_data:
+      if label is True:
+          current_positive += 1
+      elif label is False:
+          current_negative += 1
+      elif label is None:
+          current_unknown += 1
+
+      accumulated_positive.append(current_positive)
+      accumulated_negative.append(current_negative)
+      accumulated_unknown.append(current_unknown)
+
+
+  # True positive at index
+  TP = [total_positive - accumulated_positive[i] for i in range(len(accumulated_positive))]
+  # False positive at index
+  FP =  [total_negative - accumulated_negative[i] for i in range(len(accumulated_negative))] 
+  # True negative at index
+  TN = accumulated_negative
+  # False negative at index
+  FN = accumulated_positive
+
+  # unknown labelled positive
+  UP = [total_unknown - accumulated_unknown[i] for i in range(len(accumulated_unknown))]
+  # unknown labelled negative
+  UN = accumulated_unknown
+
+  # True positive rate at index
+  TPR = [TP[i] / total_positive if total_positive > 0 else 0 for i in range(len(TP))]
+  # False positive rate at index
+  FPR = [FP[i] / total_negative if total_negative > 0 else 0 for i in range(len(FP))]
+  # True negative rate at index
+  TNR = [1 - FPR[i] for i in range(len(TN))]
+  # False negative rate at index
+  FNR = [1 - TPR[i] for i in range(len(FN))]
+
+  # accuracy at index
+  ACC = [(TPR[i] + TNR[i]) / (total_positive + total_negative) if (total_positive + total_negative) > 0 else 0 for i in range(len(TP))]
+
+  return {'population_data': population_data,
+          'total_positive': total_positive,
+          'total_negative': total_negative,
+          'total_unknown': total_unknown,
+          'accumulated_positive': accumulated_positive,
+          'accumulated_negative': accumulated_negative,
+          'accumulated_unknown': accumulated_unknown,
+          'TP': TP,
+          'FP': FP,
+          'TN': TN,
+          'FN': FN,
+          'UP': UP,
+          'UN': UN,
+          'TPR': TPR,
+          'FPR': FPR,
+          'TNR': TNR,
+          'FNR': FNR,
+          'ACC': ACC}
+
+
+def plot_roc(TPR, FPR):
+
+  #remove unknown from TPR and FPR
+  TPR = [TPR[i] for i in range(len(TPR)) if TPR[i] != None]
+  FPR = [FPR[i] for i in range(len(FPR)) if FPR[i] != None]
+  #TPR = TPR.reverse()
+  #FPR = FPR.reverse()
+
+  fig_roc = go.Figure(data=go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'))
+
+  fig_roc.update_layout(
+      title='ROC Curve',
+      xaxis_title='False Positive Rate',
+      yaxis_title='True Positive Rate',
+      hovermode='closest'
+  )
+  return fig_roc

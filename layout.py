@@ -66,6 +66,29 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
             }
     }),
 
+    dcc.Store(id='roc_curves', data={
+        'filename': {
+            'column_name': {
+                'population_data': [],
+                'total_positive': [],
+                'total_negative': [],
+                'total_unknown': [],
+                'accumulated_positive': [],
+                'accumulated_negative': [],
+                'accumulated_unknown': [],
+                'TP': [],
+                'FP': [],
+                'TN': [],
+                'FN': [],
+                'UP': [],
+                'UN': [],
+                'TPR': [],
+                'FPR': [],
+                'TNR': [],
+                'FNR': [],
+                'ACC': []
+            }}}),
+
     html.Div([
         html.Div([
             dcc.Dropdown(
@@ -145,6 +168,10 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
         id='graph'
     ),
 
+    dcc.Graph(
+        id='graph_roc'
+    ),
+
 html.Div([
     html.Button('Reset', id='range-reset'),
     dcc.RangeSlider(
@@ -173,6 +200,7 @@ html.Div([
     #### dcc.Store Debugger ####
     html.Div(id='output-data'),  # Component to display the data
     html.Div(id='output-params'),  # Component to display the data
+    html.Div(id='output-roc'),
     html.Div(id='error-message'),  # Add a div to display error message
 
 
