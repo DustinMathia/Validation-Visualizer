@@ -215,28 +215,11 @@ def update_slider_range(selected_range):
 #     return {},[] # This means no extension, do nothing.
 
 
-# display roc curve
-'''
-@app.callback(
-    Output('graph_roc', 'figure'),
-    Input('roc_curves', 'data'),
-    Input('file-select', 'value'),
-    Input('column-select', 'value'),
-    prevent_initial_call=True
-)
-def update_roc_curve(roc_data, selected_file, selected_column):
-  if roc_data and selected_file and selected_column:
-    roc_column = roc_data.get(selected_file, {}).get(selected_column)
-    if roc_column:
-      fig_roc = utils.plot_roc(roc_column['TPR'], roc_column['FPR'])
-      return fig_roc
-  return go.Figure()
-'''
-
 
 # Update Graph Callback
 @app.callback(
     Output('graph', 'figure'),
+    Output('roc_table', 'figure'),
     [Input('stored-data', 'data'),
      Input('fit-params', 'data'),
      Input('roc_curves', 'data'),
@@ -256,11 +239,16 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
     column_data = stored_data.get(selected_file, {}).get(selected_column)
     parameter_data = fitted_params.get(selected_file, {}).get(selected_column)
     roc_column = roc_data.get(selected_file, {}).get(selected_column)
-    if column_data and parameter_data and pos_fit_dist and neg_fit_dist:
-      fig = go.Figure()
 
+    # Check if roc_column and its population_data are available and not empty
+    if not roc_column or not roc_column.get('population_data'):
+        return go.Figure(), go.Figure() # Return an empty figure if data is not ready or empty
+
+    if column_data and parameter_data and pos_fit_dist and neg_fit_dist and roc_column:
+    
       fig2 = make_subplots(rows=2, cols=2, row_heights=[0.93, 0.07], shared_xaxes= "columns",vertical_spacing=0.01,specs=[[{"secondary_y": True}, {"type": "xy"}], [{"type": "xy"}, None]])
-      utils.plot_roc(roc_column['TPR'], roc_column['FPR'], fig2)
+      utils.plot_roc_curve(roc_column['TPR'], roc_column['FPR'], fig2)
+      roc_table = utils.plot_roc_table(roc_column, pos_x)
 
       bin_edges = utils.calculate_bin_edges(column_data, range_value, selected_traces)
       positive_hist, positive_bin_edges = np.histogram(column_data['positive']['data'], bins=bin_edges, range=range_value)
@@ -286,7 +274,7 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
               positive_dist = getattr(stats, pos_fit_dist)
               x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
               positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
-              fig.add_trace(go.Scatter(x=x_range_for_pdf, y=positive_pdf, mode='lines', name='Positives', line_color='red')) #y=positive_hist
+              
               fig2.add_trace(go.Scatter(x=x_range_for_pdf, y=positive_pdf, mode='lines', name='Positives', line_color='red'), row=1, col=1, secondary_y=True) #y=positive_hist
 
         if 'Negative' in selected_traces:
@@ -298,37 +286,26 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
                negative_dist = getattr(stats, neg_fit_dist)
                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
                negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
-               fig.add_trace(go.Scatter(x=x_range_for_pdf, y=negative_pdf, mode='lines', name='Negatives', line_color='green')) #y=negative_hist
+               
                fig2.add_trace(go.Scatter(x=x_range_for_pdf, y=negative_pdf, mode='lines', name='Negatives', line_color='green'), row=1, col=1, secondary_y=True) #y=negative_hist
-        #if 'Unknown' in selected_traces:
-         # fig.add_trace(go.Scatter(x=unknown_bar_center,  y=unknown_hist, mode='lines', name='Unknown', line_color='gray', yaxis='y2'))
 
       elif chart_type == 'Histogram':
         # Graph Bars
         if 'Positive' in selected_traces:
-          fig.add_trace(go.Bar(x=positive_bar_center, y=positive_hist, name='Positives', marker_color='red', width=positive_bar_widths))
           fig2.add_trace(go.Bar(x=positive_bar_center, y=positive_hist, name='Positives', marker_color='red', width=positive_bar_widths), row=1, col=1, secondary_y=True)
 
 
 
 
-        if 'Negative' in selected_traces:
-          fig.add_trace(go.Bar(x=negative_bar_center, y=negative_hist, name='Negatives', marker_color='green',  width=negative_bar_widths))
+        if 'Negative' in selected_traces: 
           fig2.add_trace(go.Bar(x=negative_bar_center, y=negative_hist, name='Negatives', marker_color='green',  width=negative_bar_widths), row=1, col=1, secondary_y=True)
-
-
-
-        #if 'Unknown' in selected_traces:
-         # fig.add_trace(go.Bar(x=unknown_bar_center, y=unknown_hist, name='Unknown', marker_color='gray', width=unknown_bar_widths, yaxis='y2'))
 
       if 'Unknown' in selected_traces:
         if unknown_chart == 'Histogram':
-          fig.add_trace(go.Bar(x=unknown_bar_center, y=unknown_hist, name='Unknown', marker_color='gray', width=unknown_bar_widths, yaxis='y2'))
           fig2.add_trace(go.Bar(x=unknown_bar_center, y=unknown_hist, name='Unknown', marker_color='gray', width=unknown_bar_widths), row=1, col=1, secondary_y=False)
 
 
         if unknown_chart == 'Line':
-          fig.add_trace(go.Scatter(x=unknown_bar_center, y=unknown_hist, mode='lines', name='Unknown', line_color='gray', yaxis='y2'))
           fig2.add_trace(go.Scatter(x=unknown_bar_center, y=unknown_hist, mode='lines', name='Unknown', line_color='gray'), row=1, col=1, secondary_y=False)
 
       fig2.add_trace(go.Box( #positive points  #draw original data points in boxplot below x axis
@@ -356,19 +333,19 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
           ), row=2, col=1)          
 
 
-      #Add vertical cutoff line
-      fig.add_vline(x=pos_x, line_width=3, line_dash="dashdot", line_color="orange",
-                    annotation_text=pos_x, annotation_position="top",  # Position above the line
-                    annotation_font=dict(size=18)) # Customize font
       fig2.add_vline(x=pos_x, line_width=3, line_dash="dashdot", line_color="orange",
                     annotation_text=pos_x, annotation_position="top",  # Position above the line
                     annotation_font=dict(size=18), row=1, col=1) # Customize font
 
+      fig2.update_yaxes(showticklabels=False, row=2, col=1)
+      fig2.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
+      fig2.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
 
 
 
 
-      fig.update_layout(
+
+      '''fig.update_layout(
         yaxis={
             'showgrid': True,
             'gridcolor': 'lightgray',
@@ -390,17 +367,13 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
           xaxis_range=[range_value[0], range_value[1]], # Change graph range depending on slider range
         )
       fig.update_yaxes(showgrid=True)
-      fig.update_traces(opacity=0.75)
+      fig.update_traces(opacity=0.75)'''
 
 
-      fig2.update_yaxes(showticklabels=False, row=2, col=1)
-      fig2.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
-      fig2.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
 
-      #return fig
-      return fig2
+      return fig2, roc_table
   else:
-    return go.Figure()
+    return go.Figure(), go.Figure()
 
 
 if __name__ == '__main__':

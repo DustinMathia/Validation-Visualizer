@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import stats
 import plotly.graph_objects as go
+import bisect
 
 def manipulate_data(data_list, column_names):
   manipulated_data = {}
@@ -152,7 +153,7 @@ def make_roc_curve(positive_data, negative_data, unknown_data):  # view confusio
           'ACC': ACC}
 
 
-def plot_roc(TPR, FPR, fig):
+def plot_roc_curve(TPR, FPR, fig):
 
   #remove unknown from TPR and FPR
   TPR = [TPR[i] for i in range(len(TPR)) if TPR[i] != None]
@@ -170,3 +171,18 @@ def plot_roc(TPR, FPR, fig):
   #    hovermode='closest'
   #)
   return fig
+
+
+def bisect_population_w_threshold(roc_data, threshold_value):
+    index = bisect.bisect_left(roc_data['population_data'], threshold_value, key=lambda x: x[0])
+    if index >= len(roc_data['population_data']):
+        index = len(roc_data['population_data']) - 1
+    if index < 0:
+        index = 0
+    return index
+
+def plot_roc_table(roc_data, threshold_value):
+    i = bisect_population_w_threshold(roc_data, threshold_value)
+    #raise Exception(roc_data)
+    table = go.Figure(data=[go.Table(header=dict(values=['TP', 'FP', 'TN', 'FN', 'UP', 'UN', 'TPR', 'FPR', 'TNR', 'FNR', 'ACC']), cells=dict(values=[[roc_data['TP'][i]], [roc_data['FP'][i]], [roc_data['TN'][i]], [roc_data['FN'][i]], [roc_data['UP'][i]], [roc_data['UN'][i]], [round(roc_data['TPR'][i], 4)], [round(roc_data['FPR'][i], 4)], [round(roc_data['TNR'][i], 4)], [round(roc_data['FNR'][i], 4)], [round(roc_data['ACC'][i], 4)]]))])
+    return table
