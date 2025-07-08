@@ -165,12 +165,14 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
 
 
     dcc.Graph(
-        id='graph'
+        id='graph',
+        style={'margin-bottom': '0px'}
     ),
 
-    dcc.Graph(
-        id='roc_table'
-    ),
+   # dcc.Graph(
+   #     id='roc_table',
+   #     style={'margin-top': '5px', 'margin-bottom': '5px'}
+   # ),
 
 html.Div([
     html.Button('Reset', id='range-reset'),
@@ -196,6 +198,10 @@ html.Div([
     )
     ]),
 
+    dcc.Graph(
+        id='roc_table',
+        style={'margin-top': '5px', 'margin-bottom': '5px'}
+    ),
 
     #### dcc.Store Debugger ####
     html.Div(id='output-data'),  # Component to display the data
