@@ -216,6 +216,7 @@ def update_slider_range(selected_range):
 
 
 # display roc curve
+'''
 @app.callback(
     Output('graph_roc', 'figure'),
     Input('roc_curves', 'data'),
@@ -230,7 +231,7 @@ def update_roc_curve(roc_data, selected_file, selected_column):
       fig_roc = utils.plot_roc(roc_column['TPR'], roc_column['FPR'])
       return fig_roc
   return go.Figure()
-
+'''
 
 
 # Update Graph Callback
@@ -238,6 +239,7 @@ def update_roc_curve(roc_data, selected_file, selected_column):
     Output('graph', 'figure'),
     [Input('stored-data', 'data'),
      Input('fit-params', 'data'),
+     Input('roc_curves', 'data'),
      Input('file-select', 'value'),
      Input('column-select', 'value'),    # Input from dropdown
      Input('pos-statfit-select', 'value'), # Select fit lines
@@ -249,15 +251,16 @@ def update_roc_curve(roc_data, selected_file, selected_column):
      Input('unknown-chart', 'value'),
     prevent_initial_call=True  # Prevent the callback from firing on initial load
 )
-def update_graph(stored_data, fitted_params, selected_file, selected_column, pos_fit_dist, neg_fit_dist, chart_type, pos_x, range_value, selected_traces, unknown_chart):
-  if stored_data and selected_file and selected_column and fitted_params:
+def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_column, pos_fit_dist, neg_fit_dist, chart_type, pos_x, range_value, selected_traces, unknown_chart):
+  if stored_data and selected_file and selected_column and fitted_params and roc_data:
     column_data = stored_data.get(selected_file, {}).get(selected_column)
     parameter_data = fitted_params.get(selected_file, {}).get(selected_column)
+    roc_column = roc_data.get(selected_file, {}).get(selected_column)
     if column_data and parameter_data and pos_fit_dist and neg_fit_dist:
       fig = go.Figure()
 
       fig2 = make_subplots(rows=2, cols=2, row_heights=[0.93, 0.07], shared_xaxes= "columns",vertical_spacing=0.01,specs=[[{"secondary_y": True}, {"type": "xy"}], [{"type": "xy"}, None]])
-
+      utils.plot_roc(roc_column['TPR'], roc_column['FPR'], fig2)
 
       bin_edges = utils.calculate_bin_edges(column_data, range_value, selected_traces)
       positive_hist, positive_bin_edges = np.histogram(column_data['positive']['data'], bins=bin_edges, range=range_value)

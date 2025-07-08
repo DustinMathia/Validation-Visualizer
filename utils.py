@@ -152,7 +152,7 @@ def make_roc_curve(positive_data, negative_data, unknown_data):  # view confusio
           'ACC': ACC}
 
 
-def plot_roc(TPR, FPR):
+def plot_roc(TPR, FPR, fig):
 
   #remove unknown from TPR and FPR
   TPR = [TPR[i] for i in range(len(TPR)) if TPR[i] != None]
@@ -160,12 +160,13 @@ def plot_roc(TPR, FPR):
   #TPR = TPR.reverse()
   #FPR = FPR.reverse()
 
-  fig_roc = go.Figure(data=go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'))
+  #fig_roc = go.Figure(data=go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'))
+  fig.add_trace(go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'), row=1, col=2)
 
-  fig_roc.update_layout(
-      title='ROC Curve',
-      xaxis_title='False Positive Rate',
-      yaxis_title='True Positive Rate',
-      hovermode='closest'
-  )
-  return fig_roc
+  #fig.update_layout(
+  #    title='ROC Curve',
+  #    xaxis_title='False Positive Rate',
+  #    yaxis_title='True Positive Rate',
+  #    hovermode='closest'
+  #)
+  return fig

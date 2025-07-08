@@ -168,10 +168,6 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
         id='graph'
     ),
 
-    dcc.Graph(
-        id='graph_roc'
-    ),
-
 html.Div([
     html.Button('Reset', id='range-reset'),
     dcc.RangeSlider(
