@@ -6,6 +6,9 @@ colors = {
 }
 
 layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # Use Calibri for now per recommended by stanford site
+
+    html.Div(id='error-message'),  # Add a div to display error message
+
     html.H1(
         children='Hello Dash',
         style={
@@ -195,8 +198,7 @@ html.Div([
     #### dcc.Store Debugger ####
     html.Div(id='output-data'),  # Component to display the data
     html.Div(id='output-params'),  # Component to display the data
-    html.Div(id='output-roc'),
-    html.Div(id='error-message'),  # Add a div to display error message
+    html.Div(id='output-roc')
 
 
 
