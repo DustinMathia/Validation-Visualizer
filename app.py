@@ -50,19 +50,22 @@ def display_stored_data(stored_data, fitted_params, roc_curves):
 # Store data ready to graph
 @callback(
     Output('stored-data', 'data', allow_duplicate=True),  # Output to store the data
-    Output('fit-params', 'data'),  # Output to store the data
-    Output('roc_curves', 'data'),
+    Output('fit-params', 'data', allow_duplicate=True),  # Output to store the data
+    Output('roc_curves', 'data', allow_duplicate=True),
     Output('error-message', 'children'),  # Output to display the error
     Input('upload-data', 'contents'),  # Input from the upload component
     State('upload-data', 'filename'),  # State to get the filename
+    State('stored-data', 'data'), # State to get existing stored data
+    State('fit-params', 'data'), # State to get existing fit params
+    State('roc_curves', 'data'), # State to get existing roc curves
     prevent_initial_call=True  # Prevent the callback from firing on initial load
 )
-def store_file(list_of_contents, list_of_filenames):
+def store_file(list_of_contents, list_of_filenames, existing_stored_data, existing_fitted_params, existing_roc_curves):
     if list_of_contents is not None:
       # Dictionary to store all file data
-      all_files_data = {}
-      all_files_fit_params = {}
-      all_files_roc = {}
+      all_files_data = existing_stored_data if existing_stored_data is not None else {}
+      all_files_fit_params = existing_fitted_params if existing_fitted_params is not None else {}
+      all_files_roc = existing_roc_curves if existing_roc_curves is not None else {}
 
       for content, filename in zip(list_of_contents, list_of_filenames):
         if isinstance(content, str):  # Check if content is a string
@@ -114,16 +117,18 @@ def store_file(list_of_contents, list_of_filenames):
 @app.callback(
     Output('file-select', 'options'),
     Output('file-select', 'value'),
-    Input('stored-data', 'data')
+    Input('stored-data', 'data'),
+    State('file-select', 'value')
 )
-def update_file_select_options(stored_data):
+def update_file_select_options(stored_data, current_file_select_value):
     if stored_data:
         file_options = [{'label': filename, 'value': filename} for filename in stored_data.keys()]
+        if current_file_select_value and current_file_select_value in stored_data.keys():
+            file_value = current_file_select_value
+        else:
+            file_value = list(stored_data.keys())[0]
     else:
-        file_options = []  # Return an empty list if no files are stored
-    if stored_data:
-        file_value = list(stored_data.keys())[0]
-    else:
+        file_options = []
         file_value = None
     return file_options, file_value
 

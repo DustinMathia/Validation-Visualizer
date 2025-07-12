@@ -40,54 +40,55 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
     ),
 
     dcc.Store(id='stored-data', data={
-        'filename': {
-            'column_name': {
-                'positive': {'data': [], 'hist': [], 'bin_edges': [], 'bar_widths': []},
-                'negative': {'data': [], 'hist': [], 'bin_edges': [], 'bar_widths': []},
-                'unknown': {'data': [], 'hist': [], 'bin_edges': [], 'bar_widths': []},
-                'range_min': 0, 'range_max': 100, 'range_value': [0,100], 'slider_value': 0
-            }
-        }
+      #  'filename': {
+      #      'column_name': {
+      #          'positive': {'data': [], 'hist': [], 'bin_edges': [], 'bar_widths': []},
+      #          'negative': {'data': [], 'hist': [], 'bin_edges': [], 'bar_widths': []},
+      #          'unknown': {'data': [], 'hist': [], 'bin_edges': [], 'bar_widths': []},
+      #          'range_min': 0, 'range_max': 100, 'range_value': [0,100], 'slider_value': 0
+      #      }
+      #  }
     }),
 
 
     dcc.Store(id='fit-params', data={
-          'filename': {
-            'column_name': {
-                'positive': {'norm': {'loc': 0, 'scale': 0},  #               'r-squared': None, 'aic': None, 'bic': None},
-                             'expon': {'loc': 0, 'scale': 0},  #              'r-squared': None, 'aic': None, 'bic': None},
-                             'exponnorm': {'K': 0, 'loc': 0, 'scale': 0}},  # 'r-squared': None, 'aic': None, 'bic': None}},
-                'negative': {'norm': {'loc': 0, 'scale': 0},    #             'r-squared': None, 'aic': None, 'bic': None},
-                             'expon': {'loc': 0, 'scale': 0}},     #           'r-squared': None, 'aic': None, 'bic': None},
-                             'exponnorm': {'K': 0, 'loc': 0, 'scale': 0}}, # 'r-squared': None, 'aic': None, 'bic': None}},
-                'unknown': {'norm': {'loc': 0, 'scale': 0}, #                 'r-squared': None, 'aic': None, 'bic': None},
-                             'expon': {'loc': 0, 'scale': 0}, #               'r-squared': None, 'aic': None, 'bic': None},
-                             'exponnorm': {'K': 0, 'loc': 0, 'scale': 0}}#, 'r-squared': None, 'aic': None, 'bic': None}}
-            }
+         # 'filename': {
+         #   'column_name': {
+         #       'positive': {'norm': {'loc': 0, 'scale': 0},  #               'r-squared': None, 'aic': None, 'bic': None},
+         #                    'expon': {'loc': 0, 'scale': 0},  #              'r-squared': None, 'aic': None, 'bic': None},
+         #                    'exponnorm': {'K': 0, 'loc': 0, 'scale': 0}},  # 'r-squared': None, 'aic': None, 'bic': None}},
+         #       'negative': {'norm': {'loc': 0, 'scale': 0},    #             'r-squared': None, 'aic': None, 'bic': None},
+         #                    'expon': {'loc': 0, 'scale': 0}},     #           'r-squared': None, 'aic': None, 'bic': None},
+         #                    'exponnorm': {'K': 0, 'loc': 0, 'scale': 0}}, # 'r-squared': None, 'aic': None, 'bic': None}},
+         #       'unknown': {'norm': {'loc': 0, 'scale': 0}, #                 'r-squared': None, 'aic': None, 'bic': None},
+         #                    'expon': {'loc': 0, 'scale': 0}, #               'r-squared': None, 'aic': None, 'bic': None},
+         #                    'exponnorm': {'K': 0, 'loc': 0, 'scale': 0}}#, 'r-squared': None, 'aic': None, 'bic': None}}
+         #   }
     }),
 
     dcc.Store(id='roc_curves', data={
-        'filename': {
-            'column_name': {
-                'population_data': [],
-                'total_positive': [],
-                'total_negative': [],
-                'total_unknown': [],
-                'accumulated_positive': [],
-                'accumulated_negative': [],
-                'accumulated_unknown': [],
-                'TP': [],
-                'FP': [],
-                'TN': [],
-                'FN': [],
-                'UP': [],
-                'UN': [],
-                'TPR': [],
-                'FPR': [],
-                'TNR': [],
-                'FNR': [],
-                'ACC': []
-            }}}),
+       # 'filename': {
+       #     'column_name': {
+       #         'population_data': [],
+       #         'total_positive': [],
+       #         'total_negative': [],
+       #         'total_unknown': [],
+       #         'accumulated_positive': [],
+       #         'accumulated_negative': [],
+       #         'accumulated_unknown': [],
+       #         'TP': [],
+       #         'FP': [],
+       #         'TN': [],
+       #         'FN': [],
+       #         'UP': [],
+       #         'UN': [],
+       #         'TPR': [],
+       #         'FPR': [],
+       #         'TNR': [],
+       #         'FNR': [],
+       #         'ACC': []
+       #     }}
+            }),
 
     html.Div([
         html.Div([
