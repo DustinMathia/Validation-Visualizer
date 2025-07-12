@@ -208,23 +208,6 @@ def update_slider_range(selected_range):
     slider_max = selected_range[1]
     return slider_min, slider_max
 
-
-# # Callback to make slider line faster
-# @app.callback(
-#     Output('graph', 'extendData'),
-#     [Input('slider-position', 'value')],     # Input from range slider
-#     [State('graph', 'figure')],
-#     prevent_initial_call=True
-# )
-# def update_line_position(pos_x, fig):
-#     if fig is not None:
-#         # Assuming your line trace is the first trace (index 0)
-#         # Update the line's x and y data based on pos_x
-#         return dict(x=[[pos_x]], y=[[pos_x]]), [0]
-#     return {},[] # This means no extension, do nothing.
-
-
-
 # Update Graph Callback
 @app.callback(
     Output('graph', 'figure'),
@@ -244,10 +227,26 @@ def update_slider_range(selected_range):
     prevent_initial_call=True  # Prevent the callback from firing on initial load
 )
 def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_column, pos_fit_dist, neg_fit_dist, chart_type, pos_x, range_value, selected_traces, unknown_chart):
-  if stored_data and selected_file and selected_column and fitted_params and roc_data:
+    # Only check for fundamental data needed for any graph
+    if not (stored_data and selected_file and selected_column):# and fitted_params and roc_data:
+        # Return empty figures and default slider values
+        return go.Figure(), go.Figure()
+
     column_data = stored_data.get(selected_file, {}).get(selected_column)
     parameter_data = fitted_params.get(selected_file, {}).get(selected_column)
     roc_column = roc_data.get(selected_file, {}).get(selected_column)
+    file_data = stored_data.get(selected_file,{})
+    col_data  = file_data.get(selected_column,{}) 
+
+    positive_data = col_data.get('positive', {}).get('data', [])
+    negative_data = col_data.get('negative', {}).get('data', [])
+    unknown_data = col_data.get('unknown', {}).get('data', [])
+
+    range_min = col_data.get('range_min', 0)
+    range_max = col_data.get('range_max', 100)
+
+    fig2 = make_subplots(rows=2, cols=2, row_heights=[0.93, 0.07], shared_xaxes= "columns",vertical_spacing=0.01,specs=[[{"secondary_y": True}, {"type": "xy"}], [{"type": "xy"}, None]])
+
 
     # Check if roc_column and its population_data are available and not empty
     if not roc_column or not roc_column.get('population_data'):
@@ -255,7 +254,7 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
 
     if column_data and parameter_data and pos_fit_dist and neg_fit_dist and roc_column:
     
-      fig2 = make_subplots(rows=2, cols=2, row_heights=[0.93, 0.07], shared_xaxes= "columns",vertical_spacing=0.01,specs=[[{"secondary_y": True}, {"type": "xy"}], [{"type": "xy"}, None]])
+      #fig2 = make_subplots(rows=2, cols=2, row_heights=[0.93, 0.07], shared_xaxes= "columns",vertical_spacing=0.01,specs=[[{"secondary_y": True}, {"type": "xy"}], [{"type": "xy"}, None]])
       utils.plot_roc_curve(roc_column['TPR'], roc_column['FPR'], fig2)
       roc_table = utils.plot_roc_table(roc_column, pos_x)
 
@@ -344,8 +343,8 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
 
 
       fig2.add_vline(x=pos_x, line_width=3, line_dash="dashdot", line_color="orange",
-                    annotation_text=pos_x, annotation_position="top",  # Position above the line
-                    annotation_font=dict(size=18), row=1, col=1) # Customize font
+                    annotation_text=pos_x, annotation_position="top right",  # Position above the line
+                    annotation_font=dict(size=18), row=1, col=1, secondary_y=True) # Customize font
 
       fig2.update_yaxes(showticklabels=False, row=2, col=1)
       fig2.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
@@ -356,37 +355,7 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
 
 
 
-
-
-      '''fig.update_layout(
-        yaxis={
-            'showgrid': True,
-            'gridcolor': 'lightgray',
-            'gridwidth': 1,
-            'griddash': 'solid'
-        },
-        yaxis2=dict(
-            title='Unknown',  # Set title for y2 axis
-            overlaying='y',  # Overlay on top of y axis
-            side='right',  # Place y2 axis on the right
-        )
-      )
-
-      fig.update_layout(
-          plot_bgcolor=colors['background'],
-          paper_bgcolor=colors['background'],
-          font_color=colors['text'],
-          barmode='overlay',
-          xaxis_range=[range_value[0], range_value[1]], # Change graph range depending on slider range
-        )
-      fig.update_yaxes(showgrid=True)
-      fig.update_traces(opacity=0.75)'''
-
-
-
       return fig2, roc_table
-  else:
-    return go.Figure(), go.Figure()
 
 
 if __name__ == '__main__':
