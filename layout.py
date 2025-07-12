@@ -156,30 +156,21 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
             dcc.RadioItems(['Histogram', 'Line'], 'Histogram', id='unknown-chart')
         ], style={'width': '30%', 'display': 'inline-block'})
     ]),
-    # html.Div([
-    #     dcc.RadioItems(['Line', 'Histogram'], 'Line', inline=True, id='chart-type')
-    # ]),
-    # html.Div([
-    #     dcc.RadioItems(['Raw', 'Logarithmic'], 'Line', inline=True, id='unknown-scale')
-    # ]),
 
+    html.Div([
+    dcc.Graph(
+        id='roc_table',
+        style={'display': 'block', 'width': 'auto', 'height': '100px'}),
 
     dcc.Graph(
         id='graph',
-        style={'margin-bottom': '0px'}
-    ),
-
-   # dcc.Graph(
-   #     id='roc_table',
-   #     style={'margin-top': '5px', 'margin-bottom': '5px'}
-   # ),
+        style={'display': 'block', 'width': 'auto', 'height': 'auto'})
+    ], style={'display': 'flex', 'flex-direction': 'column', 'gap': '0px'}),
 
 html.Div([
-    html.Button('Reset', id='range-reset'),
+    html.Button('Reset', id='range-reset', n_clicks=0),
     dcc.RangeSlider(
         id='range-slider',
-        #updatemode='drag',
-        # Placeholder
         min=0,
         max=100,
         value=[0, 100]
@@ -198,10 +189,7 @@ html.Div([
     )
     ]),
 
-    dcc.Graph(
-        id='roc_table',
-        style={'margin-top': '5px', 'margin-bottom': '5px'}
-    ),
+
 
     #### dcc.Store Debugger ####
     html.Div(id='output-data'),  # Component to display the data

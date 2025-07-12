@@ -172,10 +172,11 @@ def update_column_select_options(file_name, stored_data):
      Output('range-slider', 'max'),
      Output('range-slider', 'value'),],
     Input('column-select', 'value'),
+    Input('range-reset', 'n_clicks'),
     State('stored-data', 'data'),
     State('file-select', 'value')
 )
-def update_range_slider_range(selected_column, stored_data, selected_file):
+def update_range_slider_range(selected_column, button, stored_data, selected_file):
     if stored_data and selected_column in stored_data.get(selected_file, {}):
         column_data = stored_data[selected_file][selected_column]
 
@@ -183,6 +184,9 @@ def update_range_slider_range(selected_column, stored_data, selected_file):
         range_max = column_data['range_max']
 
         initial_range = column_data.get('range_value', [range_min, range_max])
+
+        if "range-reset" == ctx.triggered_id:
+            initial_range = [range_min, range_max]
 
         return range_min, range_max, initial_range  # Return updated stored data
     else:
@@ -250,6 +254,7 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
       utils.plot_roc_curve(roc_column['TPR'], roc_column['FPR'], fig2)
       roc_table = utils.plot_roc_table(roc_column, pos_x)
 
+      # Calculate Histogram points depending of ranger slider
       bin_edges = utils.calculate_bin_edges(column_data, range_value, selected_traces)
       positive_hist, positive_bin_edges = np.histogram(column_data['positive']['data'], bins=bin_edges, range=range_value)
       negative_hist, negative_bin_edges = np.histogram(column_data['negative']['data'], bins=bin_edges, range=range_value)
@@ -340,6 +345,9 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
       fig2.update_yaxes(showticklabels=False, row=2, col=1)
       fig2.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
       fig2.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
+      fig2.update_layout(
+         margin=dict(l=20, r=20, t=0, b=0),
+        )
 
 
 

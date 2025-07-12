@@ -7,16 +7,29 @@ def manipulate_data(data_list, column_names):
   manipulated_data = {}
   col_dtypes = data_list.dtype.fields
   numeric_cols = [col_name for col_name, col_type in col_dtypes.items()
-                   if col_type[0] in (np.int_, np.float64) and col_name != 'reference_result']
+                   if col_type[0] in (np.int_, np.float64) and col_name != 'reference_result'] 
+
   for col in numeric_cols:
     # Filter data based on reference_result
-    positive_data_filtered = data_list[data_list['reference_result'] >  0][col]
-    negative_data_filtered = data_list[data_list['reference_result'] <  0][col]
-    unknown_data_filtered  = data_list[data_list['reference_result'] == 0][col]
+    print(data_list.dtype.names)
+    if 'reference_result' in data_list.dtype.names:
+        print("i did it")
+        positive_data_filtered = data_list[data_list['reference_result'] >  0][col]
+        negative_data_filtered = data_list[data_list['reference_result'] <  0][col]
+        unknown_data_filtered  = data_list[data_list['reference_result'] == 0][col] 
+    else:
+        unknown_data_filtered  = data_list[col] 
+        positive_data_filtered = np.array([])
+        negative_data_filtered = np.array([])
 
-    # Range Min, Max, Value, and Slider Initial Value
-    range_min = 0 #min([positive_data_filtered.min(), negative_data_filtered.min(), unknown_data_filtered.min()])
-    range_max = max([positive_data_filtered.max(), negative_data_filtered.max(), unknown_data_filtered.max()])
+    all_data = np.concatenate([positive_data_filtered, negative_data_filtered, unknown_data_filtered])
+    if all_data.size > 0:
+        range_min = all_data.min()
+        range_max = all_data.max()
+    else:
+        range_min = 0
+        range_max = 100 # Default range if no data
+
     range_value = [range_min, range_max]
     slider_value = range_min
 
@@ -49,15 +62,24 @@ def fit_params(file_data):
     negative_data = file_data[column]['negative']['data']
     unknown_data  = file_data[column]['unknown'] ['data']
 
-    pnl, pns = stats.norm.fit(positive_data)
-    pel, pes = stats.expon.fit(positive_data)
-    penk, penl, pens = stats.exponnorm.fit(positive_data)
-    nnl, nns = stats.norm.fit(negative_data)
-    nel, nes = stats.expon.fit(negative_data)
-    nenk, nenl, nens = stats.exponnorm.fit(negative_data)
-    unl, uns = stats.norm.fit(unknown_data)
-    uel, ues = stats.expon.fit(unknown_data)
-    uenk, uenl, uens = stats.exponnorm.fit(unknown_data)
+    # Initialize all parameters to None
+    pnl, pns, pel, pes, penk, penl, pens = None, None, None, None, None, None, None
+    nnl, nns, nel, nes, nenk, nenl, nens = None, None, None, None, None, None, None
+    unl, uns, uel, ues, uenk, uenl, uens = None, None, None, None, None, None, None
+
+    if positive_data.size > 0:
+        pnl, pns = stats.norm.fit(positive_data)
+        pel, pes = stats.expon.fit(positive_data)
+        penk, penl, pens = stats.exponnorm.fit(positive_data)
+    if negative_data.size > 0:
+        nnl, nns = stats.norm.fit(negative_data)
+        nel, nes = stats.expon.fit(negative_data)
+        nenk, nenl, nens = stats.exponnorm.fit(negative_data)
+    if unknown_data.size > 0:
+        unl, uns = stats.norm.fit(unknown_data)
+        uel, ues = stats.expon.fit(unknown_data)
+        uenk, uenl, uens = stats.exponnorm.fit(unknown_data)
+
     fitted_data[column] = {
                   'positive': {'norm': {'loc': pnl, 'scale': pns},#                'r-squared': None, 'aic': None, 'bic': None},
                               'expon': {'loc': pel, 'scale': pes},#                'r-squared': None, 'aic': None, 'bic': None},
@@ -77,6 +99,26 @@ def make_roc_curve(positive_data, negative_data, unknown_data):  # view confusio
   total_negative = len(negative_data)
   total_unknown  = len(unknown_data)
 
+  if total_positive ==  0 and total_positive == 0: # usually if reference_result doesnt exist
+     return {'population_data': None,
+          'total_positive': None,
+          'total_negative': None,
+          'total_unknown': None,
+          'accumulated_positive': None,
+          'accumulated_negative': None,
+          'accumulated_unknown': None,
+          'TP': None,
+          'FP': None,
+          'TN': None,
+          'FN': None,
+          'UP': None,
+          'UN': None,
+          'TPR': None,
+          'FPR': None,
+          'TNR': None,
+          'FNR': None,
+          'ACC': None}
+ 
   # make list of formated data values: tuple (value, True/False)
   positive_data = [(value, True) for value in positive_data]
   negative_data = [(value, False) for value in negative_data]
@@ -126,12 +168,12 @@ def make_roc_curve(positive_data, negative_data, unknown_data):  # view confusio
   # False positive rate at index
   FPR = [FP[i] / total_negative if total_negative > 0 else 0 for i in range(len(FP))]
   # True negative rate at index
-  TNR = [1 - FPR[i] for i in range(len(TN))]
+  TNR = [1 - FPR[i] if FPR[i] is not None else None for i in range(len(TN))] # Handle division by zero
   # False negative rate at index
-  FNR = [1 - TPR[i] for i in range(len(FN))]
-
+  FNR = [1 - TPR[i] if TPR[i] is not None else None for i in range(len(FN))] # Handle division by zero
+ 
   # accuracy at index
-  ACC = [(TPR[i] + TNR[i]) / (total_positive + total_negative) if (total_positive + total_negative) > 0 else 0 for i in range(len(TP))]
+  ACC = [(TPR[i] + TNR[i]) / (total_positive + total_negative) if (total_positive + total_negative) > 0 and TPR[i] is not None and TNR[i] is not None else 0 for i in range(len(TP))]
 
   return {'population_data': population_data,
           'total_positive': total_positive,
@@ -156,20 +198,13 @@ def make_roc_curve(positive_data, negative_data, unknown_data):  # view confusio
 def plot_roc_curve(TPR, FPR, fig):
 
   #remove unknown from TPR and FPR
-  TPR = [TPR[i] for i in range(len(TPR)) if TPR[i] != None]
-  FPR = [FPR[i] for i in range(len(FPR)) if FPR[i] != None]
-  #TPR = TPR.reverse()
-  #FPR = FPR.reverse()
+  # Filter out None values before plotting
+  filtered_tpr = [t for t in TPR if t is not None]
+  filtered_fpr = [f for f in FPR if f is not None]
 
-  #fig_roc = go.Figure(data=go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'))
-  fig.add_trace(go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'), row=1, col=2)
+  if filtered_tpr and filtered_fpr: # Only plot if there's data to plot
+    fig.add_trace(go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'), row=1, col=2)
 
-  #fig.update_layout(
-  #    title='ROC Curve',
-  #    xaxis_title='False Positive Rate',
-  #    yaxis_title='True Positive Rate',
-  #    hovermode='closest'
-  #)
   return fig
 
 
@@ -182,7 +217,29 @@ def bisect_population_w_threshold(roc_data, threshold_value):
     return index
 
 def plot_roc_table(roc_data, threshold_value):
+    if not roc_data or not roc_data.get('population_data'):
+        # Return an empty figure or a figure with a message if data is not available
+        return go.Figure()
+
     i = bisect_population_w_threshold(roc_data, threshold_value)
-    #raise Exception(roc_data)
-    table = go.Figure(data=[go.Table(header=dict(values=['TP', 'FP', 'TN', 'FN', 'UP', 'UN', 'TPR', 'FPR', 'TNR', 'FNR', 'ACC']), cells=dict(values=[[roc_data['TP'][i]], [roc_data['FP'][i]], [roc_data['TN'][i]], [roc_data['FN'][i]], [roc_data['UP'][i]], [roc_data['UN'][i]], [round(roc_data['TPR'][i], 4)], [round(roc_data['FPR'][i], 4)], [round(roc_data['TNR'][i], 4)], [round(roc_data['FNR'][i], 4)], [round(roc_data['ACC'][i], 4)]]))])
+    # Check if any of the values are None before trying to access them
+    tp_val = roc_data['TP'][i] if roc_data['TP'] else None
+    fp_val = roc_data['FP'][i] if roc_data['FP'] else None
+    tn_val = roc_data['TN'][i] if roc_data['TN'] else None
+    fn_val = roc_data['FN'][i] if roc_data['FN'] else None
+    up_val = roc_data['UP'][i] if roc_data['UP'] else None
+    un_val = roc_data['UN'][i] if roc_data['UN'] else None
+    tpr_val = round(roc_data['TPR'][i], 4) if roc_data['TPR'] and roc_data['TPR'][i] is not None else None
+    fpr_val = round(roc_data['FPR'][i], 4) if roc_data['FPR'] and roc_data['FPR'][i] is not None else None
+    tnr_val = round(roc_data['TNR'][i], 4) if roc_data['TNR'] and roc_data['TNR'][i] is not None else None
+    fnr_val = round(roc_data['FNR'][i], 4) if roc_data['FNR'] and roc_data['FNR'][i] is not None else None
+    acc_val = round(roc_data['ACC'][i], 4) if roc_data['ACC'] and roc_data['ACC'][i] is not None else None
+
+
+    table = go.Figure(data=[go.Table(header=dict(values=['TP', 'FP', 'TN', 'FN', 'UP', 'UN', 'TPR', 'FPR', 'TNR', 'FNR', 'ACC']),
+                                     cells=dict(values=[[tp_val], [fp_val], [tn_val], [fn_val], [up_val], [un_val], [tpr_val], [fpr_val], [tnr_val], [fnr_val], [acc_val]]))])
+    table.update_layout(
+    margin=dict(l=20, r=20, t=0, b=0),
+)
     return table
+
