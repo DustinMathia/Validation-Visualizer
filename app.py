@@ -238,9 +238,9 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
     file_data = stored_data.get(selected_file,{})
     col_data  = file_data.get(selected_column,{}) 
 
-    positive_data = col_data.get('positive', {}).get('data', [])
-    negative_data = col_data.get('negative', {}).get('data', [])
-    unknown_data = col_data.get('unknown', {}).get('data', [])
+    positive_data = np.array(col_data.get('positive', {}).get('data', []))
+    negative_data = np.array(col_data.get('negative', {}).get('data', []))
+    unknown_data = np.array(col_data.get('unknown', {}).get('data', []))
 
     range_min = col_data.get('range_min', 0)
     range_max = col_data.get('range_max', 100)
@@ -250,13 +250,16 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
 
     # Check if roc_column and its population_data are available and not empty
     if not roc_column or not roc_column.get('population_data'):
-        return go.Figure(), go.Figure() # Return an empty figure if data is not ready or empty
+        roc_table = go.Figure()
+    else:
+        utils.plot_roc_curve(roc_column['TPR'], roc_column['FPR'], fig2)
+        roc_table = utils.plot_roc_table(roc_column, pos_x)
 
-    if column_data and parameter_data and pos_fit_dist and neg_fit_dist and roc_column:
+    if column_data and parameter_data and pos_fit_dist and neg_fit_dist: #and roc_column:
     
       #fig2 = make_subplots(rows=2, cols=2, row_heights=[0.93, 0.07], shared_xaxes= "columns",vertical_spacing=0.01,specs=[[{"secondary_y": True}, {"type": "xy"}], [{"type": "xy"}, None]])
-      utils.plot_roc_curve(roc_column['TPR'], roc_column['FPR'], fig2)
-      roc_table = utils.plot_roc_table(roc_column, pos_x)
+      #utils.plot_roc_curve(roc_column['TPR'], roc_column['FPR'], fig2)
+      #roc_table = utils.plot_roc_table(roc_column, pos_x)
 
       # Calculate Histogram points depending of ranger slider
       bin_edges = utils.calculate_bin_edges(column_data, range_value, selected_traces)
@@ -274,7 +277,7 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
 
       # Graph np bins depending on graph type
       if chart_type == 'Line':
-        if 'Positive' in selected_traces:
+        if 'Positive' in selected_traces and positive_data.size > 0:
           if pos_fit_dist == 'none':
               fig2.add_trace(go.Scatter(x=positive_bar_center, y=positive_hist, mode='lines', name='Positives', line_color='red'), row=1, col=1, secondary_y=True)
           else:
@@ -283,10 +286,9 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
               positive_dist = getattr(stats, pos_fit_dist)
               x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
               positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
-              
               fig2.add_trace(go.Scatter(x=x_range_for_pdf, y=positive_pdf, mode='lines', name='Positives', line_color='red'), row=1, col=1, secondary_y=True) #y=positive_hist
 
-        if 'Negative' in selected_traces:
+        if 'Negative' in selected_traces and negative_data.size > 0:
           if neg_fit_dist == 'none':
                fig2.add_trace(go.Scatter(x=negative_bar_center, y=negative_hist, mode='lines', name='Positives', line_color='green'), row=1, col=1, secondary_y=True)
           else:
@@ -295,51 +297,45 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
                negative_dist = getattr(stats, neg_fit_dist)
                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
                negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
-               
                fig2.add_trace(go.Scatter(x=x_range_for_pdf, y=negative_pdf, mode='lines', name='Negatives', line_color='green'), row=1, col=1, secondary_y=True) #y=negative_hist
 
       elif chart_type == 'Histogram':
-        # Graph Bars
-        if 'Positive' in selected_traces:
+        if 'Positive' in selected_traces and positive_data.size > 0:
           fig2.add_trace(go.Bar(x=positive_bar_center, y=positive_hist, name='Positives', marker_color='red', width=positive_bar_widths), row=1, col=1, secondary_y=True)
-
-
-
-
-        if 'Negative' in selected_traces: 
+        if 'Negative' in selected_traces and negative_data.size > 0: 
           fig2.add_trace(go.Bar(x=negative_bar_center, y=negative_hist, name='Negatives', marker_color='green',  width=negative_bar_widths), row=1, col=1, secondary_y=True)
 
-      if 'Unknown' in selected_traces:
+      if 'Unknown' in selected_traces and unknown_data.size > 0:
         if unknown_chart == 'Histogram':
           fig2.add_trace(go.Bar(x=unknown_bar_center, y=unknown_hist, name='Unknown', marker_color='gray', width=unknown_bar_widths), row=1, col=1, secondary_y=False)
-
-
         if unknown_chart == 'Line':
           fig2.add_trace(go.Scatter(x=unknown_bar_center, y=unknown_hist, mode='lines', name='Unknown', line_color='gray'), row=1, col=1, secondary_y=False)
 
-      fig2.add_trace(go.Box( #positive points  #draw original data points in boxplot below x axis
-          x=column_data['positive']['data'],
-          marker_symbol='line-ns-open',
-          marker_color='red',
-          boxpoints='all',
-          jitter=1,
-          fillcolor='rgba(255,255,255,0)',
-          line_color='rgba(255,255,255,0)',
-          hoveron='points',
-          showlegend=False
-          ), row=2, col=1)   
+      if positive_data.size > 0:
+        fig2.add_trace(go.Box( #positive points  #draw original data points in boxplot below x axis
+            x=column_data['positive']['data'],
+            marker_symbol='line-ns-open',
+            marker_color='red',
+            boxpoints='all',
+            jitter=1,
+            fillcolor='rgba(255,255,255,0)',
+            line_color='rgba(255,255,255,0)',
+            hoveron='points',
+            showlegend=False
+            ), row=2, col=1)   
 
-      fig2.add_trace(go.Box( #negative points  #draw original data points in boxplot below x axis
-          x=column_data['negative']['data'],
-          marker_symbol='line-ns-open',
-          marker_color='green',
-          boxpoints='all',
-          jitter=1,
-          fillcolor='rgba(255,255,255,0)',
-          line_color='rgba(255,255,255,0)',
-          hoveron='points',
-          showlegend=False
-          ), row=2, col=1)          
+      if negative_data.size > 0:
+        fig2.add_trace(go.Box( #negative points  #draw original data points in boxplot below x axis
+            x=column_data['negative']['data'],
+            marker_symbol='line-ns-open',
+            marker_color='green',
+            boxpoints='all',
+            jitter=1,
+            fillcolor='rgba(255,255,255,0)',
+            line_color='rgba(255,255,255,0)',
+            hoveron='points',
+            showlegend=False
+            ), row=2, col=1)          
 
 
       fig2.add_vline(x=pos_x, line_width=3, line_dash="dashdot", line_color="orange",
