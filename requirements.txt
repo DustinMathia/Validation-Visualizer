@@ -1,5 +1,4 @@
 dash 
-pandas 
 numpy 
 scipy
 dash-bootstrap-components
