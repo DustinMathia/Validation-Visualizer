@@ -17,7 +17,6 @@ layout = dbc.Container(style={'backgroundColor': colors['background']}, children
 
     # Top Row: Header and Upload
     dbc.Row([
-        dbc.Col(header, width=12),
         dbc.Col(dcc.Upload(
             id='upload-data',
             children=html.Div([
@@ -97,13 +96,13 @@ layout = dbc.Container(style={'backgroundColor': colors['background']}, children
                 html.Div(children='Unknown Chart Type: ', className="mb-2"),
                 dcc.RadioItems(['Histogram', 'Line'], 'Histogram', id='unknown-chart', className="mb-3")
             ])
-        ], width=3, className="p-2 border"), # Adjust width as needed, add some padding and border
+        ], width=2, className="p-2 border"), # Adjust width as needed, add some padding and border
 
         # Middle Column: Main Plot
         dbc.Col([
             dcc.Graph(
                 id='graph',
-                style={'width': '100%', 'height': '600px'} # Set a fixed height or make it responsive
+                style={'width': '100%', 'height': '525px'} # Set a fixed height or make it responsive
             )
         ], width=5, className="p-2 border"), # Adjust width, add some padding and border
 
@@ -111,10 +110,10 @@ layout = dbc.Container(style={'backgroundColor': colors['background']}, children
         dbc.Col([
             dbc.Tabs([
                 dbc.Tab(label="ROC Curve", children=[
-                    dcc.Graph(id='roc_plot', style={'height': '550px'}) # Set height for plot
+                    dcc.Graph(id='roc_plot', style={'height': '525px'}) # Set height for plot
                 ]),
                 dbc.Tab(label="ROC Matrix", children=[
-                    dcc.Graph(id='roc_table', style={'height': '550px'}) # Set height for table
+                    dcc.Graph(id='roc_table', style={'height': '525px', 'width':'525px'}) # Set height for table
                 ]),
                 dbc.Tab(label="Raw Data", children=[
                     dag.AgGrid( # Correctly use dag.AgGrid
@@ -123,11 +122,11 @@ layout = dbc.Container(style={'backgroundColor': colors['background']}, children
                         rowData=[],
                         columnSize="sizeToFit",
                         defaultColDef={"resizable": True, "sortable": True, "filter": True},
-                        style={'height': '550px'} # Set height for the grid
+                               style={'height': '525px'} # Set height for the grid
                     )
                 ]),
             ])
-        ], width=4, className="p-2 border") # Adjust width, add some padding and border
+        ], width=5, className="p-2 border") # Adjust width, add some padding and border
     ], className="mb-3"), # Add margin-bottom to the middle row
 
     # Bottom Row: Sliders and Buttons

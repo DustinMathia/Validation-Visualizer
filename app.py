@@ -247,12 +247,25 @@ def update_roc_plot_and_table(stored_data, fitted_params, roc_data, selected_fil
         roc_table, roc_table_header, roc_index = utils.gen_roc_table(roc_column, pos_x, parameter_data['positive']['norm']) 
         roc_fig = utils.plot_roc_curve(roc_column['TPR'], roc_column['FPR'], roc_index)
         roc_table = go.Figure(data=[go.Table(
-            header=dict(values=roc_table_header),
+            header=dict(values=roc_table_header,
+                        fill_color='#f8f8f8',
+                        align='left'),
             cells=dict(values=[roc_table[0],
                                roc_table[1],
                                roc_table[2],
-                               roc_table[3]])
+                               roc_table[3]],
+                       fill_color=[['#fcfcfc','#f8f8f8','#fcfcfc','#f8f8f8','#fcfcfc']*4],
+                       align='left')
             )])
+        roc_fig.update_layout(
+            showlegend=False,
+            xaxis=dict(range=[-0.05, 1.05], title="selectivity / False Positive Rate"),
+            yaxis=dict(range=[-0.05, 1.05], title="sensitivity / True Positive Rate")
+        )
+        roc_table.update_layout(
+            margin=dict(l=10, r=10, t=180, b=10), # Reduce overall margins
+            width=525
+        )
     return roc_fig, roc_table
 
 # data ag grid
@@ -411,7 +424,7 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
       fig2.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
       fig2.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
       fig2.update_layout(
-         margin=dict(l=20, r=20, t=0, b=0),
+         margin=dict(l=20, r=20, t=0, b=0), showlegend=False
         )
 
 

@@ -11,9 +11,7 @@ def manipulate_data(data_list, column_names):
 
   for col in numeric_cols:
     # Filter data based on reference_result
-    print(data_list.dtype.names)
     if 'reference_result' in data_list.dtype.names:
-        print("i did it")
         positive_data_filtered = data_list[data_list['reference_result'] >  0][col]
         negative_data_filtered = data_list[data_list['reference_result'] <  0][col]
         unknown_data_filtered  = data_list[data_list['reference_result'] == 0][col] 
@@ -215,7 +213,7 @@ def plot_roc_curve(TPR, FPR, i):
   if filtered_tpr and filtered_fpr: # Only plot if there's data to plot
     fig.add_trace(go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'))
     # find two points where threshold is
-    fig.add_trace(go.Scatter(x=[thresh_pt_x], y=[thresh_pt_y], mode='markers', marker=dict(color='orange', size=10, symbol='circle')))
+    fig.add_trace(go.Scatter(x=[thresh_pt_x], y=[thresh_pt_y], mode='markers', marker=dict(color='orange', size=20, symbol='circle')))
 
   return fig
 
@@ -229,9 +227,6 @@ def bisect_population_w_threshold(roc_data, threshold_value):
     return index
 
 def gen_roc_table(roc_data, threshold_value, norm_params):
-    roc_table_labels = [['TP','FN','FP','TN'],
-                        ['sensitivity (TPR)','miss rate (FNR)','prob. of false alarm (FPR)','specifity (TNR)'],
-                        ['unkn. as pos.','unkn. as neg.','accuracy','z-score']]
     if not roc_data or not roc_data.get('population_data'):
         # Return an empty figure or a figure with a message if data is not available
         return roc_table_labels, [[None,None,None,None],[None,None,None,None],[None,None,None,None]]
@@ -256,9 +251,9 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
     z_score = round(z_score, 2)
 
     roc_table_header = ['TP', 'FN', 'FP', 'TN']
-    roc_table = [[tp_val, 'sensitivity (TPR)', tpr_val, 'unkn. as pos.', up_val],
-                 [fn_val, 'miss rate (FNR)', fnr_val, 'unkn. as neg.', un_val],
-                 [fp_val, 'prob. of false alarm (FPR)', fpr_val, 'accuracy', acc_val],
-                 [tn_val, 'specificity (TNR)', tnr_val, 'z-score', z_score]]
+    roc_table = [[tp_val, 'Sensitivity (TPR)', tpr_val, 'Unkn. as Pos.', up_val],
+                 [fn_val, 'Miss Rate (FNR)', fnr_val, 'Unkn. as Neg.', un_val],
+                 [fp_val, 'False Alarm (FPR)', fpr_val, 'Accuracy', acc_val],
+                 [tn_val, 'Specificity (TNR)', tnr_val, 'Z-score', z_score]]
     return roc_table, roc_table_header, i
 
