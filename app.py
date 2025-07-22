@@ -8,7 +8,7 @@ import pandas as pd
 import base64
 import io
 
-import layout
+import layout2
 import utils
 
 import dash_bootstrap_components as dbc
@@ -21,7 +21,7 @@ load_figure_template(["spacelab"])
 
 
 app = Dash(__name__, external_stylesheets=[SELECTED_BOOTSTRAP_THEME, dbc.icons.BOOTSTRAP, dbc_css])
-app.layout = layout.layout  
+app.layout = layout2.layout  
 
 
 ###### dcc.Store Debugger #######
