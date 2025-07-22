@@ -63,31 +63,37 @@ def fit_params(file_data):
     unknown_data  = file_data[column]['unknown'] ['data']
 
     # Initialize all parameters to None
-    pnl, pns, pel, pes, penk, penl, pens = None, None, None, None, None, None, None
-    nnl, nns, nel, nes, nenk, nenl, nens = None, None, None, None, None, None, None
-    unl, uns, uel, ues, uenk, uenl, uens = None, None, None, None, None, None, None
+    pnl, pns, pgc, pgl, pgs, pel, pes, penk, penl, pens = None, None, None, None, None, None, None, None, None, None
+    nnl, nns, ngc, ngl, ngs, nel, nes, nenk, nenl, nens = None, None, None, None, None, None, None, None, None, None
+    unl, uns, ugc, ugl, ugs, uel, ues, uenk, uenl, uens = None, None, None, None, None, None, None, None, None, None
 
     if positive_data.size > 0:
         pnl, pns = stats.norm.fit(positive_data)
+        pgc, pgl, pgs = stats.gompertz.fit(positive_data)
         pel, pes = stats.expon.fit(positive_data)
         penk, penl, pens = stats.exponnorm.fit(positive_data)
     if negative_data.size > 0:
         nnl, nns = stats.norm.fit(negative_data)
+        ngc, ngl, ngs = stats.gompertz.fit(negative_data)
         nel, nes = stats.expon.fit(negative_data)
         nenk, nenl, nens = stats.exponnorm.fit(negative_data)
     if unknown_data.size > 0:
         unl, uns = stats.norm.fit(unknown_data)
+        ugc, ugl, ugs = stats.gompertz.fit(unknown_data)
         uel, ues = stats.expon.fit(unknown_data)
         uenk, uenl, uens = stats.exponnorm.fit(unknown_data)
 
     fitted_data[column] = {
                   'positive': {'norm': {'loc': pnl, 'scale': pns},#                'r-squared': None, 'aic': None, 'bic': None},
+                              'gompertz': {'c': pgc, 'loc': pgl, 'scale': pgs},
                               'expon': {'loc': pel, 'scale': pes},#                'r-squared': None, 'aic': None, 'bic': None},
                               'exponnorm': {'K': penk, 'loc': penl, 'scale': pens}},# 'r-squared': None, 'aic': None, 'bic': None}},
                   'negative': {'norm': {'loc': nnl, 'scale': nns},#                'r-squared': None, 'aic': None, 'bic': None},
+                              'gompertz': {'c': ngc, 'loc': ngl, 'scale': ngs},
                               'expon': {'loc': nel, 'scale': nes},#                'r-squared': None, 'aic': None, 'bic': None},
                               'exponnorm': {'K': nenk, 'loc': nenl, 'scale': nens}},# 'r-squared': None, 'aic': None, 'bic': None}},
                   'unknown':  {'norm': {'loc': unl, 'scale': uns},#                'r-squared': None, 'aic': None, 'bic': None},
+                              'gompertz': {'c': ugc, 'loc': ugl, 'scale': ugs}, 
                               'expon': {'loc': uel, 'scale': ues},#                'r-squared': None, 'aic': None, 'bic': None},
                               'exponnorm': {'K': uenk, 'loc': uenl, 'scale': uens}}#, 'r-squared': None, 'aic': None, 'bic': None}}
               }
@@ -195,15 +201,21 @@ def make_roc_curve(positive_data, negative_data, unknown_data):  # view confusio
           'ACC': ACC}
 
 
-def plot_roc_curve(TPR, FPR, fig):
+def plot_roc_curve(TPR, FPR, i):
+  
+  thresh_pt_x = FPR[i]
+  thresh_pt_y = TPR[i]
 
   #remove unknown from TPR and FPR
   # Filter out None values before plotting
   filtered_tpr = [t for t in TPR if t is not None]
   filtered_fpr = [f for f in FPR if f is not None]
 
+  fig = go.Figure()
   if filtered_tpr and filtered_fpr: # Only plot if there's data to plot
-    fig.add_trace(go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'), row=1, col=2)
+    fig.add_trace(go.Scatter(x=FPR, y=TPR, mode='lines', line_shape='hv'))
+    # find two points where threshold is
+    fig.add_trace(go.Scatter(x=[thresh_pt_x], y=[thresh_pt_y], mode='markers', marker=dict(color='orange', size=10, symbol='circle')))
 
   return fig
 
@@ -216,10 +228,13 @@ def bisect_population_w_threshold(roc_data, threshold_value):
         index = 0
     return index
 
-def plot_roc_table(roc_data, threshold_value):
+def gen_roc_table(roc_data, threshold_value, norm_params):
+    roc_table_labels = [['TP','FN','FP','TN'],
+                        ['sensitivity (TPR)','miss rate (FNR)','prob. of false alarm (FPR)','specifity (TNR)'],
+                        ['unkn. as pos.','unkn. as neg.','accuracy','z-score']]
     if not roc_data or not roc_data.get('population_data'):
         # Return an empty figure or a figure with a message if data is not available
-        return go.Figure()
+        return roc_table_labels, [[None,None,None,None],[None,None,None,None],[None,None,None,None]]
 
     i = bisect_population_w_threshold(roc_data, threshold_value)
     # Check if any of the values are None before trying to access them
@@ -229,17 +244,21 @@ def plot_roc_table(roc_data, threshold_value):
     fn_val = roc_data['FN'][i] if roc_data['FN'] else None
     up_val = roc_data['UP'][i] if roc_data['UP'] else None
     un_val = roc_data['UN'][i] if roc_data['UN'] else None
-    tpr_val = round(roc_data['TPR'][i], 4) if roc_data['TPR'] and roc_data['TPR'][i] is not None else None
-    fpr_val = round(roc_data['FPR'][i], 4) if roc_data['FPR'] and roc_data['FPR'][i] is not None else None
-    tnr_val = round(roc_data['TNR'][i], 4) if roc_data['TNR'] and roc_data['TNR'][i] is not None else None
-    fnr_val = round(roc_data['FNR'][i], 4) if roc_data['FNR'] and roc_data['FNR'][i] is not None else None
-    acc_val = round(roc_data['ACC'][i], 4) if roc_data['ACC'] and roc_data['ACC'][i] is not None else None
+    tpr_val = round(roc_data['TPR'][i], 2) if roc_data['TPR'] and roc_data['TPR'][i] is not None else None
+    fpr_val = round(roc_data['FPR'][i], 2) if roc_data['FPR'] and roc_data['FPR'][i] is not None else None
+    tnr_val = round(roc_data['TNR'][i], 2) if roc_data['TNR'] and roc_data['TNR'][i] is not None else None
+    fnr_val = round(roc_data['FNR'][i], 2) if roc_data['FNR'] and roc_data['FNR'][i] is not None else None
+    acc_val = round(roc_data['ACC'][i], 2) if roc_data['ACC'] and roc_data['ACC'][i] is not None else None
 
+    mean = norm_params['loc']
+    std = norm_params['scale']
+    z_score = (threshold_value - mean) / std
+    z_score = round(z_score, 2)
 
-    table = go.Figure(data=[go.Table(header=dict(values=['TP', 'FP', 'TN', 'FN', 'UP', 'UN', 'TPR', 'FPR', 'TNR', 'FNR', 'ACC']),
-                                     cells=dict(values=[[tp_val], [fp_val], [tn_val], [fn_val], [up_val], [un_val], [tpr_val], [fpr_val], [tnr_val], [fnr_val], [acc_val]]))])
-    table.update_layout(
-    margin=dict(l=20, r=20, t=0, b=0),
-)
-    return table
+    roc_table_header = ['TP', 'FN', 'FP', 'TN']
+    roc_table = [[tp_val, 'sensitivity (TPR)', tpr_val, 'unkn. as pos.', up_val],
+                 [fn_val, 'miss rate (FNR)', fnr_val, 'unkn. as neg.', un_val],
+                 [fp_val, 'prob. of false alarm (FPR)', fpr_val, 'accuracy', acc_val],
+                 [tn_val, 'specificity (TNR)', tnr_val, 'z-score', z_score]]
+    return roc_table, roc_table_header, i
 

@@ -2,3 +2,6 @@ dash
 pandas 
 numpy 
 scipy
+dash-bootstrap-components
+dash-bootstrap-templates
+dash-ag-grid

@@ -1,27 +1,20 @@
 from dash import Dash, dcc, html
+import dash_ag_grid as dag
 
 colors = {
     'background': '#FFFFFF',
     'text': '#2E2D29'
 }
 
+
+
+header = html.H4(
+    "Validation DataViewer", className="bg-primary p-2 mb-2 text-center"
+)
+
 layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # Use Calibri for now per recommended by stanford site
 
     html.Div(id='error-message'),  # Add a div to display error message
-
-    html.H1(
-        children='Hello Dash',
-        style={
-            'textAlign': 'center',
-            'color': colors['text']
-        }
-    ),
-
-    html.Div(children='Dash: A web application framework for your data.',
-        style={
-          'textAlign': 'center',
-          'color': colors['text']
-    }),
 
     dcc.Upload(
       id='upload-data',
@@ -42,56 +35,11 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
       multiple=True # Allow multiple files to be uploaded
     ),
 
-    dcc.Store(id='stored-data', data={
-      #  'filename': {
-      #      'column_name': {
-      #          'positive': {'data': [], 'hist': [], 'bin_edges': [], 'bar_widths': []},
-      #          'negative': {'data': [], 'hist': [], 'bin_edges': [], 'bar_widths': []},
-      #          'unknown': {'data': [], 'hist': [], 'bin_edges': [], 'bar_widths': []},
-      #          'range_min': 0, 'range_max': 100, 'range_value': [0,100], 'slider_value': 0
-      #      }
-      #  }
-    }),
 
-
-    dcc.Store(id='fit-params', data={
-         # 'filename': {
-         #   'column_name': {
-         #       'positive': {'norm': {'loc': 0, 'scale': 0},  #               'r-squared': None, 'aic': None, 'bic': None},
-         #                    'expon': {'loc': 0, 'scale': 0},  #              'r-squared': None, 'aic': None, 'bic': None},
-         #                    'exponnorm': {'K': 0, 'loc': 0, 'scale': 0}},  # 'r-squared': None, 'aic': None, 'bic': None}},
-         #       'negative': {'norm': {'loc': 0, 'scale': 0},    #             'r-squared': None, 'aic': None, 'bic': None},
-         #                    'expon': {'loc': 0, 'scale': 0}},     #           'r-squared': None, 'aic': None, 'bic': None},
-         #                    'exponnorm': {'K': 0, 'loc': 0, 'scale': 0}}, # 'r-squared': None, 'aic': None, 'bic': None}},
-         #       'unknown': {'norm': {'loc': 0, 'scale': 0}, #                 'r-squared': None, 'aic': None, 'bic': None},
-         #                    'expon': {'loc': 0, 'scale': 0}, #               'r-squared': None, 'aic': None, 'bic': None},
-         #                    'exponnorm': {'K': 0, 'loc': 0, 'scale': 0}}#, 'r-squared': None, 'aic': None, 'bic': None}}
-         #   }
-    }),
-
-    dcc.Store(id='roc_curves', data={
-       # 'filename': {
-       #     'column_name': {
-       #         'population_data': [],
-       #         'total_positive': [],
-       #         'total_negative': [],
-       #         'total_unknown': [],
-       #         'accumulated_positive': [],
-       #         'accumulated_negative': [],
-       #         'accumulated_unknown': [],
-       #         'TP': [],
-       #         'FP': [],
-       #         'TN': [],
-       #         'FN': [],
-       #         'UP': [],
-       #         'UN': [],
-       #         'TPR': [],
-       #         'FPR': [],
-       #         'TNR': [],
-       #         'FNR': [],
-       #         'ACC': []
-       #     }}
-            }),
+    dcc.Store(id='raw-file', data={}),                                                                         
+    dcc.Store(id='stored-data', data={}),
+    dcc.Store(id='fit-params', data={}),
+    dcc.Store(id='roc_curves', data={}),
 
     html.Div([
         html.Div([
@@ -107,6 +55,7 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
             dcc.Dropdown(
                 options=[{'label': 'None', 'value': 'none'},
                          {'label': 'Normal', 'value': 'norm'},
+                         {'label': 'Gompertz', 'value': 'gompertz'},
                          {'label': 'Exponential', 'value': 'expon'},
                          {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
                 value='norm',
@@ -117,6 +66,7 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
             dcc.Dropdown(
                 options=[{'label': 'None', 'value': 'none'},
                          {'label': 'Normal', 'value': 'norm'},
+                         {'label': 'Gompertz', 'value': 'gompertz'},
                          {'label': 'Exponential', 'value': 'expon'},
                          {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
                 value='norm',
@@ -163,12 +113,22 @@ layout = html.Div(style={'backgroundColor': colors['background']}, children=[ # 
 
     html.Div([
     dcc.Graph(
-        id='roc_table',
-        style={'display': 'block', 'width': 'auto', 'height': '100px'}),
+        id='roc_table'),
 
     dcc.Graph(
         id='graph',
-        style={'display': 'block', 'width': 'auto', 'height': 'auto'})
+        style={'display': 'block', 'width': 'auto', 'height': 'auto'}),
+   
+    dcc.Graph(id='roc_plot'),
+
+    dag.AgGrid( # Replaced dcc.Graph with dag.AgGrid
+        id='ag-grid',
+        columnDefs=[], # Initial empty column definitions
+        rowData=[],    # Initial empty row data
+        columnSize="sizeToFit",
+        defaultColDef={"resizable": True, "sortable": True, "filter": True},
+    )
+
     ], style={'display': 'flex', 'flex-direction': 'column', 'gap': '0px'}),
 
 html.Div([
@@ -198,7 +158,8 @@ html.Div([
     #### dcc.Store Debugger ####
     html.Div(id='output-data'),  # Component to display the data
     html.Div(id='output-params'),  # Component to display the data
-    html.Div(id='output-roc')
+    html.Div(id='output-roc'),
+    html.Div(id='output-raw')
 
 
 
