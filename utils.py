@@ -42,17 +42,51 @@ def manipulate_data(data_list, column_names):
   return manipulated_data
 
 def calculate_bin_edges(column_data, graph_range, traces):
-  if column_data is None:
-    return []
-  extended_data = []
-  if 'Positive' in traces:
-    extended_data.extend(column_data['positive']['data'])
-  if 'Negative' in traces:
-    extended_data.extend(column_data['negative']['data'])
-  if 'Unknown' in traces:
-    extended_data.extend(column_data['unknown']['data'])
-  bin_edges = np.histogram_bin_edges(extended_data, bins='auto', range=graph_range)
-  return bin_edges
+    if column_data is None or not traces:
+        return []
+
+    extended_data = []
+    if 'Positive' in traces:
+        extended_data.extend(column_data['positive']['data'])
+    if 'Negative' in traces:
+        extended_data.extend(column_data['negative']['data'])
+    if 'Unknown' in traces:
+        extended_data.extend(column_data['unknown']['data'])
+
+    if not extended_data: # If after filtering by traces, no data is left
+        return []
+
+    # Ensure extended_data is a numpy array for min/max
+    extended_data = np.array(extended_data)
+
+    # Use the provided graph_range for bin edges if available and valid
+    hist_range = graph_range
+    if hist_range is None or len(hist_range) != 2 or hist_range[0] >= hist_range[1]:
+        # Fallback to data min/max if graph_range is invalid or not provided
+        if extended_data.size > 0:
+            hist_range = [math.floor(extended_data.min() - 1), math.ceil(extended_data.max() + 1)]
+        else:
+            return [] # No data, no bins
+
+    # Calculate a reasonable number of bins based on the range, e.g., aiming for ~50-100 bins
+    # This provides more consistent visual representation than 'auto' for wide ranges
+    data_range = hist_range[1] - hist_range[0]
+    if data_range <= 0: # Prevent division by zero or negative range
+        return []
+
+    # Aim for approximately 50-100 bins. Adjust `bins_per_unit_range` as desired.
+    # For very broad ranges, a fixed number of bins like 100 might still be too sparse.
+    num_bins = 100 
+    if data_range > 0:
+        bin_width = data_range / num_bins
+    else:
+        bin_width = 1 # Default for tiny range, though it should be caught above
+
+    # Create bin edges using numpy.arange to ensure consistent width
+    bin_edges = np.arange(hist_range[0], hist_range[1] + bin_width, bin_width)
+
+    return bin_edges
+
 
 def fit_params(file_data):
   fitted_data = {}
@@ -197,7 +231,6 @@ def plot_roc_curve(roc_data, threshold_index):
         fig.add_trace(go.Scatter(x=FPR_plot, y=TPR_plot, mode='lines', line_shape='hv', name='ROC Curve'))
         fig.add_trace(go.Scatter(x=[thresh_pt_x], y=[thresh_pt_y], mode='markers', marker=dict(color='orange', size=10, symbol='circle'), name='Threshold Point'))
         fig.update_layout(
-            title='ROC Curve',
             xaxis_title='False Positive Rate (FPR)',
             yaxis_title='True Positive Rate (TPR)',
             xaxis=dict(range=[0, 1]),

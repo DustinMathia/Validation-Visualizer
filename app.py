@@ -19,7 +19,8 @@ SELECTED_BOOTSTRAP_THEME = dbc.themes.SPACELAB
 load_figure_template(["spacelab"])
 
 
-app = Dash(__name__, external_stylesheets=[SELECTED_BOOTSTRAP_THEME, dbc.icons.BOOTSTRAP, dbc_css])
+app = Dash(__name__, external_stylesheets=[SELECTED_BOOTSTRAP_THEME, dbc.icons.BOOTSTRAP, dbc_css],
+           external_scripts=['assets/dropdown_tooltips.js'])
 app.layout = layout2.layout  
 
 
@@ -169,14 +170,18 @@ def update_stored_data(slider_position, range_slider_value, stored_data, selecte
     Output('column-select', 'options'),
     Output('column-select', 'value'),
     Input('file-select', 'value'),
+    Input('column-select', 'value'),
     State('stored-data', 'data')
 )
-def update_column_select_options(file_name, stored_data):
+def update_column_select_options(file_name, selected_column, stored_data):
     if stored_data and file_name in stored_data:
         # Access column names for the selected file
         column_names = list(stored_data[file_name].keys())
         column_options = [{'label': col, 'value': col} for col in column_names]
-        column_value = column_names[0]  # Set default to first column
+        if selected_column == None:
+            column_value = column_names[0]
+        else:
+            column_value = selected_column  # Set default to first column
     else:
         column_options = []
         column_value = None

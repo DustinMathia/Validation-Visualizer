@@ -112,7 +112,7 @@ layout = dbc.Container(style={'backgroundColor': colors['background']}, children
                 dbc.Tab(label="ROC Curve", children=[
                     dcc.Graph(id='roc_plot', style={'height': '525px'}) # Set height for plot
                 ]),
-                dbc.Tab(label="ROC Matrix", children=[
+                dbc.Tab(label="ROC Table", children=[
                     dcc.Graph(id='roc_table', style={'height': '525px', 'width':'525px'}) # Set height for table
                 ]),
                 dbc.Tab(label="Raw Data", children=[
