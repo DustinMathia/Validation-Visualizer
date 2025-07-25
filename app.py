@@ -244,7 +244,7 @@ def update_roc_plot_and_table(stored_data, fitted_params, roc_data, selected_fil
         return go.Figure(), go.Figure()
     else:
         roc_table, roc_table_header, roc_index = utils.gen_roc_table(roc_column, pos_x, parameter_data['positive']['norm']) 
-        roc_fig = utils.plot_roc_curve(roc_column['TPR'], roc_column['FPR'], roc_index)
+        roc_fig = utils.plot_roc_curve(roc_column, roc_index)
         roc_table = go.Figure(data=[go.Table(
             header=dict(values=roc_table_header,
                         fill_color='#f8f8f8',
@@ -258,8 +258,8 @@ def update_roc_plot_and_table(stored_data, fitted_params, roc_data, selected_fil
             )])
         roc_fig.update_layout(
             showlegend=False,
-            xaxis=dict(range=[-0.05, 1.05], title="selectivity / False Positive Rate"),
-            yaxis=dict(range=[-0.05, 1.05], title="sensitivity / True Positive Rate")
+            xaxis=dict(range=[-0.05, 1.05], title="1 - Specificty"),
+            yaxis=dict(range=[-0.05, 1.05], title="Sensitivity")
         )
         roc_table.update_layout(
             margin=dict(l=10, r=10, t=180, b=10), # Reduce overall margins
@@ -405,7 +405,7 @@ def update_graph(stored_data, fitted_params, roc_data, selected_file, selected_c
         fig2.add_trace(go.Box( #negative points  #draw original data points in boxplot below x axis
             x=column_data['negative']['data'],
             marker_symbol='line-ns-open',
-            marker_color='green',
+            marker_color='blue',
             boxpoints='all',
             jitter=1,
             fillcolor='rgba(255,255,255,0)',
