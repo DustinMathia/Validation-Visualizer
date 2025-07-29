@@ -15,11 +15,12 @@ from dash_bootstrap_templates import load_figure_template
 import dash_ag_grid as dag
 
 dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates@V1.0.2/dbc.min.css"
+custom_css = "/assets/custom.css"
 SELECTED_BOOTSTRAP_THEME = dbc.themes.SPACELAB
 load_figure_template(["spacelab"])
 
 
-app = Dash(__name__, external_stylesheets=[SELECTED_BOOTSTRAP_THEME, dbc.icons.BOOTSTRAP, dbc_css],
+app = Dash(__name__, external_stylesheets=[SELECTED_BOOTSTRAP_THEME, dbc.icons.BOOTSTRAP, dbc_css, custom_css],
            external_scripts=['assets/dropdown_tooltips.js'])
 app.layout = layout2.layout  
 

@@ -7,9 +7,120 @@ colors = {
     'text': '#2E2D29'
 }
 
-header = html.H4(
-    "Validation DataViewer", className="bg-primary p-2 mb-2 text-center"
+navbar = dbc.NavbarSimple(
+    children=[
+        dbc.NavItem(dbc.NavLink("Analysis", href="#")),
+        dbc.NavItem(dbc.NavLink("Upload", href="#")),
+        dbc.NavItem(dbc.NavLink("Help", href="#")),
+    ],
+    brand=html.A(
+        dbc.Row(
+            [
+                dbc.Col(html.Img(src="/assets/100x100.svg", height="30px")),
+            ],
+            align="center",
+            className="g-0",
+        ),
+        href="#",
+    ),
+    color="primary",
+    dark=True,
 )
+
+positive_buttons = html.Div(
+        [
+            html.Label('Positive: ', htmlFor='pos-statfit-select'),
+                dcc.Dropdown(
+                    options=[{'label': 'None', 'value': 'none'},
+                             {'label': 'Normal', 'value': 'norm'},
+                             {'label': 'Gompertz', 'value': 'gompertz'},
+                             {'label': 'Exponential', 'value': 'expon'},
+                             {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
+                    value='norm',
+                    placeholder='Positive Stat. Fit',
+                    id='pos-statfit-select', className="mb-3"
+                ),
+
+            dbc.RadioItems(
+                id="pos-radios",
+                className="btn-group",
+                inputClassName="btn-check",
+                labelClassName="btn btn-outline-primary",
+                labelCheckedClassName="active",
+                options=[
+                    {"label": "Rug", "value": 1},
+                    {"label": "Hist.", "value": 2},
+                    {"label": "Stat. Fit", "value": 3},
+                ],
+                value=2,
+            ),
+        ],
+        className="positive-group", 
+)
+
+negative_buttons = html.Div(
+        [
+            html.Label('Negative: ', htmlFor='neg-statfit-select'),
+                dcc.Dropdown(
+                    options=[{'label': 'None', 'value': 'none'},
+                             {'label': 'Normal', 'value': 'norm'},
+                             {'label': 'Gompertz', 'value': 'gompertz'},
+                             {'label': 'Exponential', 'value': 'expon'},
+                             {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
+                    value='norm',
+                    placeholder='Negative Stat. Fit',
+                    id='neg-statfit-select', className="mb-3"
+                ),
+
+            dbc.RadioItems(
+                id="neg-radios",
+                className="btn-group",
+                inputClassName="btn-check",
+                labelClassName="btn btn-outline-primary",
+                labelCheckedClassName="active",
+                options=[
+                    {"label": "Rug", "value": 1},
+                    {"label": "Hist.", "value": 2},
+                    {"label": "Stat. Fit", "value": 3},
+                ],
+                value=2,
+            ),
+        ],
+        className="negative-group", 
+)
+
+unknown_buttons = html.Div(
+        [
+            html.Label('Unknown: ', htmlFor='unknown-statfit-select'),
+                dcc.Dropdown(
+                    options=[{'label': 'None', 'value': 'none'},
+                             {'label': 'Normal', 'value': 'norm'},
+                             {'label': 'Gompertz', 'value': 'gompertz'},
+                             {'label': 'Exponential', 'value': 'expon'},
+                             {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
+                    value='norm',
+                    placeholder='Unknown Stat. Fit',
+                    id='unknown-statfit-select', className="mb-3"
+                ),
+
+            dbc.RadioItems(
+                id="unknown-radios",
+                className="btn-group",
+                inputClassName="btn-check",
+                labelClassName="btn btn-outline-primary",
+                labelCheckedClassName="active",
+                options=[
+                    {"label": "Rug", "value": 1},
+                    {"label": "Hist.", "value": 2},
+                    {"label": "Stat. Fit", "value": 3},
+                ],
+                value=2,
+            ),
+        ],
+        className="unknown-group", 
+)
+
+
 
 layout = dbc.Container(style={'backgroundColor': colors['background']}, children=[ # Use dbc.Container
 
@@ -17,6 +128,7 @@ layout = dbc.Container(style={'backgroundColor': colors['background']}, children
 
     # Top Row: Header and Upload
     dbc.Row([
+        navbar,
         dbc.Col(dcc.Upload(
             id='upload-data',
             children=html.Div([
@@ -47,41 +159,52 @@ layout = dbc.Container(style={'backgroundColor': colors['background']}, children
         dbc.Col([
             html.Div([
                 html.Div([
+
                     dcc.Dropdown(
                         options=[],
                         placeholder='Select File',
                         id='file-select'
-                    )
+                    ),
+                    dcc.Dropdown(
+                        id='column-select',
+                        options=[],
+                        placeholder='Select Column',
+                        multi=False, # Graph only one column at a time, for now
+                        className="mb-3"
+                    ),
                 ], className="mb-3"), # Add margin-bottom
-                html.Label('Positive Stat Fit: ', htmlFor='pos-statfit-select'),
-                dcc.Dropdown(
-                    options=[{'label': 'None', 'value': 'none'},
-                             {'label': 'Normal', 'value': 'norm'},
-                             {'label': 'Gompertz', 'value': 'gompertz'},
-                             {'label': 'Exponential', 'value': 'expon'},
-                             {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
-                    value='norm',
-                    placeholder='Positive Stat Fit',
-                    id='pos-statfit-select', className="mb-3"
-                ),
-                html.Label('Negative Stat Fit: ', htmlFor='neg-statfit-select'),
-                dcc.Dropdown(
-                    options=[{'label': 'None', 'value': 'none'},
-                             {'label': 'Normal', 'value': 'norm'},
-                             {'label': 'Gompertz', 'value': 'gompertz'},
-                             {'label': 'Exponential', 'value': 'expon'},
-                             {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
-                    value='norm',
-                    placeholder='Negative Stat Fit',
-                    id='neg-statfit-select', className="mb-3"
-                ),
-                dcc.Dropdown(
-                    id='column-select',
-                    options=[],
-                    placeholder='Select Column',
-                    multi=False, # Graph only one column at a time, for now
-                    className="mb-3"
-                ),
+                #html.Label('Positive Stat Fit: ', htmlFor='pos-statfit-select'),
+                #dcc.Dropdown(
+                #    options=[{'label': 'None', 'value': 'none'},
+                #             {'label': 'Normal', 'value': 'norm'},
+                #             {'label': 'Gompertz', 'value': 'gompertz'},
+                #             {'label': 'Exponential', 'value': 'expon'},
+                #             {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
+                #    value='norm',
+                #    placeholder='Positive Stat Fit',
+                #    id='pos-statfit-select', className="mb-3"
+                #),
+                positive_buttons,
+                negative_buttons,
+                unknown_buttons,
+                #html.Label('Negative Stat Fit: ', htmlFor='neg-statfit-select'),
+                #dcc.Dropdown(
+                #    options=[{'label': 'None', 'value': 'none'},
+                #             {'label': 'Normal', 'value': 'norm'},
+                #             {'label': 'Gompertz', 'value': 'gompertz'},
+                #             {'label': 'Exponential', 'value': 'expon'},
+                #             {'label': 'Expon. Norm.', 'value': 'exponnorm'}],
+                #    value='norm',
+                #    placeholder='Negative Stat Fit',
+                #    id='neg-statfit-select', className="mb-3"
+                #),
+                #dcc.Dropdown(
+                #    id='column-select',
+                #    options=[],
+                #    placeholder='Select Column',
+                #    multi=False, # Graph only one column at a time, for now
+                #    className="mb-3"
+                #),
                 html.Div([
                     dcc.Checklist(
                         options=['Positive', 'Negative', 'Unknown'],
@@ -94,7 +217,9 @@ layout = dbc.Container(style={'backgroundColor': colors['background']}, children
                 html.Div(children='Chart Type: ', className="mb-2"),
                 dcc.RadioItems(['Line', 'Histogram'], 'Line', id='chart-type', className="mb-3"),
                 html.Div(children='Unknown Chart Type: ', className="mb-2"),
-                dcc.RadioItems(['Histogram', 'Line'], 'Histogram', id='unknown-chart', className="mb-3")
+                dcc.RadioItems(['Histogram', 'Line'], 'Histogram', id='unknown-chart', className="mb-3"),
+                #negative_buttons,
+                #unknown_buttons,
             ])
         ], width=2, className="p-2 border"), # Adjust width as needed, add some padding and border
 
