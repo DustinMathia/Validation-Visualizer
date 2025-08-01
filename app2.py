@@ -390,6 +390,131 @@ def update_data_grid(raw_files, selected_file):
         return data, column_defs
     return [], []  # Return empty lists if no data or file selected
 
+
+# Callbacks for the button groups
+@app.callback(
+    Output("pos-btn-1", "className"),
+    Output("pos-btn-2", "className"),
+    Output("pos-btn-3", "className"),
+    Input("pos-btn-1", "n_clicks"),
+    Input("pos-btn-2", "n_clicks"),
+    Input("pos-btn-3", "n_clicks"),
+    State("pos-btn-1", "className"),
+    State("pos-btn-2", "className"),
+    State("pos-btn-3", "className"),
+)
+def update_positive_buttons(b1, b2, b3, c1, c2, c3):
+    button_id = ctx.triggered_id
+    if not button_id:
+        return c1, c2, c3
+
+    if button_id == "pos-btn-1":
+        new_c1 = (
+            "btn btn-primary"
+            if "btn-outline-primary" in c1
+            else "btn btn-outline-primary"
+        )
+        return new_c1, c2, c3
+    elif button_id == "pos-btn-2":
+        new_c2 = (
+            "btn btn-primary"
+            if "btn-outline-primary" in c2
+            else "btn btn-outline-primary"
+        )
+        return c1, new_c2, c3
+    elif button_id == "pos-btn-3":
+        new_c3 = (
+            "btn btn-primary"
+            if "btn-outline-primary" in c3
+            else "btn btn-outline-primary"
+        )
+        return c1, c2, new_c3
+
+    return c1, c2, c3
+
+
+@app.callback(
+    Output("neg-btn-1", "className"),
+    Output("neg-btn-2", "className"),
+    Output("neg-btn-3", "className"),
+    Input("neg-btn-1", "n_clicks"),
+    Input("neg-btn-2", "n_clicks"),
+    Input("neg-btn-3", "n_clicks"),
+    State("neg-btn-1", "className"),
+    State("neg-btn-2", "className"),
+    State("neg-btn-3", "className"),
+)
+def update_negative_buttons(b1, b2, b3, c1, c2, c3):
+    button_id = ctx.triggered_id
+    if not button_id:
+        return c1, c2, c3
+
+    if button_id == "neg-btn-1":
+        new_c1 = (
+            "btn btn-primary"
+            if "btn-outline-primary" in c1
+            else "btn btn-outline-primary"
+        )
+        return new_c1, c2, c3
+    elif button_id == "neg-btn-2":
+        new_c2 = (
+            "btn btn-primary"
+            if "btn-outline-primary" in c2
+            else "btn btn-outline-primary"
+        )
+        return c1, new_c2, c3
+    elif button_id == "neg-btn-3":
+        new_c3 = (
+            "btn btn-primary"
+            if "btn-outline-primary" in c3
+            else "btn btn-outline-primary"
+        )
+        return c1, c2, new_c3
+
+    return c1, c2, c3
+
+
+@app.callback(
+    Output("unk-btn-1", "className"),
+    Output("unk-btn-2", "className"),
+    Output("unk-btn-3", "className"),
+    Input("unk-btn-1", "n_clicks"),
+    Input("unk-btn-2", "n_clicks"),
+    Input("unk-btn-3", "n_clicks"),
+    State("unk-btn-1", "className"),
+    State("unk-btn-2", "className"),
+    State("unk-btn-3", "className"),
+)
+def update_unknown_buttons(b1, b2, b3, c1, c2, c3):
+    button_id = ctx.triggered_id
+    if not button_id:
+        return c1, c2, c3
+
+    if button_id == "unk-btn-1":
+        new_c1 = (
+            "btn btn-primary"
+            if "btn-outline-primary" in c1
+            else "btn btn-outline-primary"
+        )
+        return new_c1, c2, c3
+    elif button_id == "unk-btn-2":
+        new_c2 = (
+            "btn btn-primary"
+            if "btn-outline-primary" in c2
+            else "btn btn-outline-primary"
+        )
+        return c1, new_c2, c3
+    elif button_id == "unk-btn-3":
+        new_c3 = (
+            "btn btn-primary"
+            if "btn-outline-primary" in c3
+            else "btn btn-outline-primary"
+        )
+        return c1, c2, new_c3
+
+    return c1, c2, c3
+
+
 # Update Graph Callback
 @app.callback(
     Output("graph", "figure"),
@@ -401,13 +526,19 @@ def update_data_grid(raw_files, selected_file):
         Input("column-select", "value"),  # Input from dropdown
         Input("pos-statfit-select", "value"),  # Select fit lines
         Input("neg-statfit-select", "value"),
-
-        Input("chart-type", "value"),
+        Input("unknown-statfit-select", "value"),
+        Input("pos-btn-1", "className"),
+        Input("pos-btn-2", "className"),
+        Input("pos-btn-3", "className"),
+        Input("neg-btn-1", "className"),
+        Input("neg-btn-2", "className"),
+        Input("neg-btn-3", "className"),
+        Input("unk-btn-1", "className"),
+        Input("unk-btn-2", "className"),
+        Input("unk-btn-3", "className"),
         State("slider-position", "value"),
         Input("range-slider", "value"),  # Input from range slider
-        Input("trace-select", "value"),
     ],
-    Input("unknown-chart", "value"),
     prevent_initial_call=True,  # Prevent the callback from firing on initial load
 )
 def update_graph(
@@ -418,12 +549,44 @@ def update_graph(
     selected_column,
     pos_fit_dist,
     neg_fit_dist,
-    chart_type,
+    unknown_fit_dist,
+    pos_btn1_class,
+    pos_btn2_class,
+    pos_btn3_class,
+    neg_btn1_class,
+    neg_btn2_class,
+    neg_btn3_class,
+    unk_btn1_class,
+    unk_btn2_class,
+    unk_btn3_class,
     pos_x,
     range_value,
-    selected_traces,
-    unknown_chart,
 ):
+    # Convert the button classes to a list of selected options for each group
+    pos_chart_types = []
+    if "btn-primary" in pos_btn1_class:
+        pos_chart_types.append(1)
+    if "btn-primary" in pos_btn2_class:
+        pos_chart_types.append(2)
+    if "btn-primary" in pos_btn3_class:
+        pos_chart_types.append(3)
+
+    neg_chart_types = []
+    if "btn-primary" in neg_btn1_class:
+        neg_chart_types.append(1)
+    if "btn-primary" in neg_btn2_class:
+        neg_chart_types.append(2)
+    if "btn-primary" in neg_btn3_class:
+        neg_chart_types.append(3)
+
+    unknown_chart_types = []
+    if "btn-primary" in unk_btn1_class:
+        unknown_chart_types.append(1)
+    if "btn-primary" in unk_btn2_class:
+        unknown_chart_types.append(2)
+    if "btn-primary" in unk_btn3_class:
+        unknown_chart_types.append(3)
+
     # Only check for fundamental data needed for any graph
     if not (
         stored_data and selected_file and selected_column
@@ -453,16 +616,15 @@ def update_graph(
         specs=[[{"secondary_y": True}], [{"type": "xy"}]],
     )
 
-    # Check if roc_column and its population_data are available and not empty
-    #   if not roc_column or not roc_column.get('population_data'):
-    #       roc_table = go.Figure()
-    #   else:
-    #       roc_table, roc_index = utils.plot_roc_table(roc_column, pos_x, parameter_data['positive']['norm'])
-    #       utils.plot_roc_curve(roc_column['TPR'], roc_column['FPR'], roc_index, fig2)
-
-    if column_data and parameter_data and pos_fit_dist and neg_fit_dist:
+    if column_data and parameter_data:
         # Calculate Histogram points depending of ranger slider
-        bin_edges = utils.calculate_bin_edges(column_data, range_value, selected_traces)
+        bin_edges = utils.calculate_bin_edges(
+            column_data,
+            range_value,
+            pos_chart_types,
+            neg_chart_types,
+            unknown_chart_types,
+        )
         positive_hist, positive_bin_edges = np.histogram(
             column_data["positive"]["data"], bins=bin_edges, range=range_value
         )
@@ -481,76 +643,28 @@ def update_graph(
         negative_bar_center = negative_bin_edges[:-1] + negative_bar_widths / 2
         unknown_bar_center = unknown_bin_edges[:-1] + unknown_bar_widths / 2
 
-        # Graph np bins depending on graph type
-        if chart_type == "Line":
-            if "Positive" in selected_traces and positive_data.size > 0:
-                if pos_fit_dist == "none":
-                    fig2.add_trace(
-                        go.Scatter(
-                            x=positive_bar_center,
-                            y=positive_hist,
-                            mode="lines",
-                            name="Positives",
-                            line_color="red",
-                        ),
-                        row=1,
-                        col=1,
-                        secondary_y=True,
-                    )
-                else:
-                    pos_params = parameter_data["positive"][pos_fit_dist]
-                    # Create distribution object
-                    positive_dist = getattr(stats, pos_fit_dist)
-                    x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
-                    positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
-                    fig2.add_trace(
-                        go.Scatter(
-                            x=x_range_for_pdf,
-                            y=positive_pdf,
-                            mode="lines",
-                            name="Positives",
-                            line_color="red",
-                        ),
-                        row=1,
-                        col=1,
-                        secondary_y=True,
-                    )  # y=positive_hist
+        # Positive Trace
+        if positive_data.size > 0:
+            if 1 in pos_chart_types:  # Rug plot (represented by Box plot for jitter)
+                fig2.add_trace(
+                    go.Box(  # positive points  #draw original data points in boxplot below x axis
+                        x=column_data["positive"]["data"],
+                        marker_symbol="line-ns-open",
+                        marker_color="red",
+                        boxpoints="all",
+                        jitter=1,
+                        fillcolor="rgba(255,255,255,0)",
+                        line_color="rgba(255,255,255,0)",
+                        hoveron="points",
+                        showlegend=False,
+                        name="Positives Rug",
+                    ),
+                    row=1,
+                    col=1,
+                    secondary_y=True,
+                )  # Plot on main graph area
 
-            if "Negative" in selected_traces and negative_data.size > 0:
-                if neg_fit_dist == "none":
-                    fig2.add_trace(
-                        go.Scatter(
-                            x=negative_bar_center,
-                            y=negative_hist,
-                            mode="lines",
-                            name="Positives",
-                            line_color="royalblue",
-                        ),
-                        row=1,
-                        col=1,
-                        secondary_y=True,
-                    )
-                else:
-                    neg_params = parameter_data["negative"][neg_fit_dist]
-                    # Create distribution object
-                    negative_dist = getattr(stats, neg_fit_dist)
-                    x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
-                    negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
-                    fig2.add_trace(
-                        go.Scatter(
-                            x=x_range_for_pdf,
-                            y=negative_pdf,
-                            mode="lines",
-                            name="Negatives",
-                            line_color="royalblue",
-                        ),
-                        row=1,
-                        col=1,
-                        secondary_y=True,
-                    )  # y=negative_hist
-
-        elif chart_type == "Histogram":
-            if "Positive" in selected_traces and positive_data.size > 0:
+            if 2 in pos_chart_types:  # Bar (Histogram)
                 fig2.add_trace(
                     go.Bar(
                         x=positive_bar_center,
@@ -563,7 +677,47 @@ def update_graph(
                     col=1,
                     secondary_y=True,
                 )
-            if "Negative" in selected_traces and negative_data.size > 0:
+
+            if 3 in pos_chart_types and pos_fit_dist != "none":  # Stat. Fit (Line)
+                pos_params = parameter_data["positive"][pos_fit_dist]
+                positive_dist = getattr(stats, pos_fit_dist)
+                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
+                positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
+                fig2.add_trace(
+                    go.Scatter(
+                        x=x_range_for_pdf,
+                        y=positive_pdf,
+                        mode="lines",
+                        name="Positives",
+                        line_color="red",
+                    ),
+                    row=1,
+                    col=1,
+                    secondary_y=True,
+                )
+
+        # Negative Trace
+        if negative_data.size > 0:
+            if 1 in neg_chart_types:  # Rug plot
+                fig2.add_trace(
+                    go.Box(
+                        x=column_data["negative"]["data"],
+                        marker_symbol="line-ns-open",
+                        marker_color="blue",
+                        boxpoints="all",
+                        jitter=1,
+                        fillcolor="rgba(255,255,255,0)",
+                        line_color="rgba(255,255,255,0)",
+                        hoveron="points",
+                        showlegend=False,
+                        name="Negatives Rug",
+                    ),
+                    row=1,
+                    col=1,
+                    secondary_y=True,
+                )
+
+            if 2 in neg_chart_types:  # Bar (Histogram)
                 fig2.add_trace(
                     go.Bar(
                         x=negative_bar_center,
@@ -577,8 +731,45 @@ def update_graph(
                     secondary_y=True,
                 )
 
-        if "Unknown" in selected_traces and unknown_data.size > 0:
-            if unknown_chart == "Histogram":
+            if 3 in neg_chart_types and neg_fit_dist != "none":  # Stat. Fit (Line)
+                neg_params = parameter_data["negative"][neg_fit_dist]
+                negative_dist = getattr(stats, neg_fit_dist)
+                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
+                negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
+                fig2.add_trace(
+                    go.Scatter(
+                        x=x_range_for_pdf,
+                        y=negative_pdf,
+                        mode="lines",
+                        name="Negatives",
+                        line_color="royalblue",
+                    ),
+                    row=1,
+                    col=1,
+                    secondary_y=True,
+                )
+
+        # Unknown Trace
+        if unknown_data.size > 0:
+            if 1 in unknown_chart_types:
+                fig2.add_trace(
+                    go.Box(
+                        x=column_data["unknown"]["data"],
+                        marker_symbol="line-ns-open",
+                        marker_color="gray",
+                        boxpoints="all",
+                        jitter=1,
+                        fillcolor="rgba(255,255,255,0)",
+                        line_color="rgba(255,255,255,0)",
+                        hoveron="points",
+                        showlegend=False,
+                        name="Unknowns Rug",
+                    ),
+                    row=1,
+                    col=1,
+                    secondary_y=False,
+                )
+            if 2 in unknown_chart_types:
                 fig2.add_trace(
                     go.Bar(
                         x=unknown_bar_center,
@@ -591,13 +782,17 @@ def update_graph(
                     col=1,
                     secondary_y=False,
                 )
-            if unknown_chart == "Line":
+            if 3 in unknown_chart_types and unknown_fit_dist != "none":
+                unknown_params = parameter_data["unknown"][unknown_fit_dist]
+                unknown_dist = getattr(stats, unknown_fit_dist)
+                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
+                unknown_pdf = unknown_dist.pdf(x_range_for_pdf, **unknown_params)
                 fig2.add_trace(
                     go.Scatter(
-                        x=unknown_bar_center,
-                        y=unknown_hist,
+                        x=x_range_for_pdf,
+                        y=unknown_pdf,
                         mode="lines",
-                        name="Unknown",
+                        name="Unknowns",
                         line_color="gray",
                     ),
                     row=1,
@@ -605,6 +800,7 @@ def update_graph(
                     secondary_y=False,
                 )
 
+        # Data points on the bottom axis (can be used for 'Rug' if not plotted above)
         if positive_data.size > 0:
             fig2.add_trace(
                 go.Box(  # positive points  #draw original data points in boxplot below x axis
@@ -628,6 +824,23 @@ def update_graph(
                     x=column_data["negative"]["data"],
                     marker_symbol="line-ns-open",
                     marker_color="blue",
+                    boxpoints="all",
+                    jitter=1,
+                    fillcolor="rgba(255,255,255,0)",
+                    line_color="rgba(255,255,255,0)",
+                    hoveron="points",
+                    showlegend=False,
+                ),
+                row=2,
+                col=1,
+            )
+
+        if unknown_data.size > 0:
+            fig2.add_trace(
+                go.Box(  # unknown points  #draw original data points in boxplot below x axis
+                    x=column_data["unknown"]["data"],
+                    marker_symbol="line-ns-open",
+                    marker_color="gray",
                     boxpoints="all",
                     jitter=1,
                     fillcolor="rgba(255,255,255,0)",

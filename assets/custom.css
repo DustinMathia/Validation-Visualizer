@@ -1,48 +1,23 @@
-/* restyle radio items */
-/* Styles for Positive group */
-.positive-group .form-check {
-  padding-left: 0;
+/* custom.css */
+
+/*
+This CSS ensures that the buttons in a dbc.ButtonGroup are
+styled correctly to look like a single, seamless component.
+*/
+.btn-group .btn {
+  border-radius: 0;
 }
 
-.positive-group .btn-group > .form-check:not(:last-child) > .btn {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.positive-group .btn-group > .form-check:not(:first-child) > .btn {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+.btn-group .btn:not(:first-child) {
   margin-left: -1px;
 }
 
-/* Styles for Negative group */
-.negative-group .form-check {
-  padding-left: 0;
+.btn-group .btn:first-child {
+  border-top-left-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
 }
 
-.negative-group .btn-group > .form-check:not(:last-child) > .btn {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.negative-group .btn-group > .form-check:not(:first-child) > .btn {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  margin-left: -1px;
-}
-
-/* Styles for Unknown group */
-.unknown-group .form-check {
-  padding-left: 0;
-}
-
-.unknown-group .btn-group > .form-check:not(:last-child) > .btn {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.unknown-group .btn-group > .form-check:not(:first-child) > .btn {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  margin-left: -1px;
+.btn-group .btn:last-child {
+  border-top-right-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
 }
