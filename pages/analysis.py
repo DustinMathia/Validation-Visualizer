@@ -1,27 +1,10 @@
+import dash
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag  # AgGrid
 
-navbar = dbc.NavbarSimple(
-    children=[
-        dbc.NavItem(dbc.NavLink("Analysis", class_name="text-light", href="#")),
-        dbc.NavItem(dbc.NavLink("Data-Manager", class_name="text-light", href="#")),
-        dbc.NavItem(dbc.NavLink("Help", class_name="text-light", href="#")),
-    ],
-    brand=html.A(
-        dbc.Row(
-            [
-                dbc.Col(html.Img(src="/assets/100x100.svg", height="30px")),
-            ],
-            align="center",
-            class_name="g-0",
-        ),
-        href="#",
-    ),
-    color="primary",
-    dark=True,
-    links_left=True,
-)
+dash.register_page(__name__, path="/")
+
 
 positive_buttons = html.Div(
     [
@@ -208,38 +191,6 @@ range_slider = html.Div(
     ]
 )
 
-alert_fail = html.Div(
-    [
-        dbc.Alert(
-            [
-                html.I(className="bi bi-x-octagon-fill me-2"),
-                "Hello! I am an alert",
-            ],
-            id="alert-fail",
-            color="danger",
-            dismissable=True,
-            is_open=True,
-            className="d-flex align-items-center",
-        ),
-    ],
-)
-
-
-alert_warning = html.Div(
-    [
-        dbc.Alert(
-            [
-                html.I(className="bi bi-exclamation-triangle-fill me-2"),
-                "Hello! I am an alert",
-            ],
-            id="alert-warning",
-            color="warning",
-            dismissable=True,
-            is_open=True,
-            className="d-flex align-items-center",
-        ),
-    ],
-)
 
 layout = dbc.Container(
     children=[
@@ -247,9 +198,6 @@ layout = dbc.Container(
         # Top Row: Header and Upload
         dbc.Row(
             [
-                navbar,
-                alert_fail,
-                alert_warning,
                 threshold_slider,
                 # dbc.Col(
                 #     dcc.Upload(

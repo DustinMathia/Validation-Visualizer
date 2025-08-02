@@ -1,4 +1,4 @@
-from logging import error
+import dash
 from dash import Dash, html, callback, Input, Output, State, ctx, ALL, no_update
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -6,9 +6,6 @@ import numpy as np
 from scipy import stats
 import base64
 import io
-
-import pages.analysis
-import layout2
 import utils
 
 import dash_bootstrap_components as dbc
@@ -25,6 +22,63 @@ POSITIVE = "#cd0200"
 NEGATIVE = "#446e9b"
 UNKNOWN = "#999"
 
+
+navbar = dbc.NavbarSimple(
+    children=[
+        dbc.NavItem(dbc.NavLink("Analysis", class_name="text-light", href="/analysis")),
+        dbc.NavItem(
+            dbc.NavLink("Data-Manager", class_name="text-light", href="/data-manager")
+        ),
+        dbc.NavItem(dbc.NavLink("Help", class_name="text-light", href="/help")),
+    ],
+    brand=html.A(
+        dbc.Row(
+            [
+                dbc.Col(html.Img(src="/assets/100x100.svg", height="30px")),
+            ],
+            align="center",
+            class_name="g-0",
+        ),
+        href="#",
+    ),
+    color="primary",
+    dark=True,
+    links_left=True,
+)
+
+alert_fail = html.Div(
+    [
+        dbc.Alert(
+            [
+                html.I(className="bi bi-x-octagon-fill me-2"),
+                "Hello! I am an alert",
+            ],
+            id="alert-fail",
+            color="danger",
+            dismissable=True,
+            is_open=True,
+            className="d-flex align-items-center",
+        ),
+    ],
+)
+
+
+alert_warning = html.Div(
+    [
+        dbc.Alert(
+            [
+                html.I(className="bi bi-exclamation-triangle-fill me-2"),
+                "Hello! I am an alert",
+            ],
+            id="alert-warning",
+            color="warning",
+            dismissable=True,
+            is_open=True,
+            className="d-flex align-items-center",
+        ),
+    ],
+)
+
 app = Dash(
     __name__,
     external_stylesheets=[
@@ -33,10 +87,17 @@ app = Dash(
         dbc_css,
         custom_css,
     ],
-    external_scripts=["assets/dropdown_tooltips.js"],
+    use_pages=True,
 )
-app.layout = pages.analysis.layout
-app.layout = layout2.layout
+
+app.layout = html.Div(
+    [
+        navbar,
+        alert_fail,
+        alert_warning,
+        dash.page_container,
+    ]
+)
 
 
 # @app.callback(
