@@ -6,9 +6,9 @@ colors = {"background": "#FFFFFF", "text": "#2E2D29"}
 
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("Analysis", href="#")),
-        dbc.NavItem(dbc.NavLink("Upload", href="#")),
-        dbc.NavItem(dbc.NavLink("Help", href="#")),
+        dbc.NavItem(dbc.NavLink("Analysis", class_name="text-light", href="#")),
+        dbc.NavItem(dbc.NavLink("Upload", class_name="text-light", href="#")),
+        dbc.NavItem(dbc.NavLink("Help", class_name="text-light", href="#")),
     ],
     brand=html.A(
         dbc.Row(
@@ -16,7 +16,7 @@ navbar = dbc.NavbarSimple(
                 dbc.Col(html.Img(src="/assets/100x100.svg", height="30px")),
             ],
             align="center",
-            className="g-0",
+            class_name="g-0",
         ),
         href="#",
     ),
@@ -36,7 +36,6 @@ positive_buttons = html.Div(
                 {"label": "Exponential", "value": "expon"},
                 {"label": "Expon. Norm.", "value": "exponnorm"},
             ],
-            value="norm",
             clearable=False,
             placeholder="Positive Stat. Fit",
             id="pos-statfit-select",
@@ -63,7 +62,7 @@ positive_buttons = html.Div(
                 ),
             ],
             id="pos-btn-group",
-            className="btn-group-sm",
+            class_name="btn-group-sm",
         ),
     ],
     className="positive-group",
@@ -80,7 +79,6 @@ negative_buttons = html.Div(
                 {"label": "Exponential", "value": "expon"},
                 {"label": "Expon. Norm.", "value": "exponnorm"},
             ],
-            value="norm",
             clearable=False,
             placeholder="Negative Stat. Fit",
             id="neg-statfit-select",
@@ -107,7 +105,7 @@ negative_buttons = html.Div(
                 ),
             ],
             id="neg-btn-group",
-            className="btn-group-sm",
+            class_name="btn-group-sm",
         ),
     ],
     className="negative-group",
@@ -124,7 +122,6 @@ unknown_buttons = html.Div(
                 {"label": "Exponential", "value": "expon"},
                 {"label": "Expon. Norm.", "value": "exponnorm"},
             ],
-            value="norm",
             clearable=False,
             placeholder="Unknown Stat. Fit",
             id="unknown-statfit-select",
@@ -151,7 +148,7 @@ unknown_buttons = html.Div(
                 ),
             ],
             id="unk-btn-group",
-            className="btn-group-sm",
+            class_name="btn-group-sm",
         ),
     ],
     className="unknown-group",
@@ -204,7 +201,7 @@ layout = dbc.Container(
                                         dbc.DropdownMenu(
                                             label="Select File",
                                             id="file-select",
-                                            className="mb-3",
+                                            class_name="mb-3",
                                         ),
                                     ]
                                 ),
@@ -213,7 +210,7 @@ layout = dbc.Container(
                                         dbc.DropdownMenu(
                                             label="Select Column",
                                             id="column-select",
-                                            className="mb-3",
+                                            class_name="mb-3",
                                         ),
                                     ]
                                 ),
@@ -248,7 +245,7 @@ layout = dbc.Container(
                         )
                     ],
                     width=2,
-                    className="p-2 border",
+                    class_name="p-2 border",
                 ),  # Adjust width as needed, add some padding and border
                 # Middle Column: Main Plot
                 dbc.Col(
@@ -262,7 +259,7 @@ layout = dbc.Container(
                         )
                     ],
                     width=5,
-                    className="p-2 border",
+                    class_name="p-2 border",
                 ),  # Adjust width, add some padding and border
                 # Right Column: Tabs (ROC Curve, ROC Table, AG-Grid)
                 dbc.Col(
@@ -309,50 +306,60 @@ layout = dbc.Container(
                         )
                     ],
                     width=5,
-                    className="p-2 border",
+                    class_name="p-2 border",
                 ),  # Adjust width, add some padding and border
             ],
-            className="mb-3",
+            class_name="mb-3",
         ),  # Add margin-bottom to the middle row
-        # Bottom Row: Sliders and Buttons
+        # Bottom Rows: Sliders and Buttons
         dbc.Row(
             [
                 dbc.Col(
-                    [
-                        html.Button(
-                            "Reset", id="range-reset", n_clicks=0, className="me-2"
-                        ),  # Add Bootstrap margin-end
-                        dcc.RangeSlider(
-                            id="range-slider",
-                            min=0,
-                            max=100,
-                            dots=False,
-                            value=[0, 100],
-                            className="mb-3",  # Add margin-bottom
-                        ),
-                    ],
-                    width=12,
-                ),
+                    dbc.Button(
+                        id="range-reset",
+                        n_clicks=0,
+                        class_name="bi bi-arrow-clockwise py-0 px-1",
+                    ),
+                    width="auto",
+                ),  # Add Bootstrap margin-end
                 dbc.Col(
-                    [
-                        html.Button("Auto", id="auto-slide", className="me-2"),
-                        dcc.Slider(
-                            id="slider-position",
-                            min=0,
-                            max=100,
-                            value=0,
-                            tooltip={"placement": "top", "always_visible": True},
-                        ),
-                    ],
-                    width=12,
+                    dcc.RangeSlider(
+                        id="range-slider",
+                        min=0,
+                        max=100,
+                        # dots=False,
+                        value=[0, 100],
+                        #            className="mb-3",  # Add margin-bottom
+                    ),
+                    width=True,
                 ),
             ],
-            className="p-2 border",
-        ),  # Add padding and border to the bottom row
+            align="center",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Button(id="auto-slide", class_name="bi bi-graph-up py-0 px-1"),
+                    width="auto",
+                ),
+                dbc.Col(
+                    dcc.Slider(
+                        id="slider-position",
+                        min=0,
+                        max=100,
+                        value=0,
+                        tooltip={"placement": "top", "always_visible": True},
+                    ),
+                    width=True,
+                ),
+            ],
+            align="center",
+        ),
+        # class_name="p-2 border",
         #### dcc.Store Debugger ####
-        html.Div(id="output-data", className="mt-3"),  # Component to display the data
-        html.Div(id="output-params", className="mt-3"),  # Component to display the data
-        html.Div(id="output-roc", className="mt-3"),
-        html.Div(id="output-raw", className="mt-3"),
+        # html.Div(id="output-data", class_name="mt-3"),  # Component to display the data
+        # html.Div(id="output-params", class_name="mt-3"),  # Component to display the data
+        # html.Div(id="output-roc", class_name="mt-3"),
+        # html.Div(id="output-raw", class_name="mt-3"),
     ],
 )

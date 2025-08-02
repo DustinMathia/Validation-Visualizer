@@ -20,6 +20,9 @@ custom_css = "/assets/custom.css"
 SELECTED_BOOTSTRAP_THEME = dbc.themes.SPACELAB
 load_figure_template(["spacelab"])
 
+POSITIVE = "#cd0200"
+NEGATIVE = "#446e9b"
+UNKNOWN = "#999"
 
 app = Dash(
     __name__,
@@ -34,32 +37,32 @@ app = Dash(
 app.layout = layout2.layout
 
 
-@app.callback(
-    Output("output-data", "children"),  # Output to display the data
-    Output("output-params", "children"),  # Output to store the data
-    Output("output-roc", "children"),
-    Output("output-raw", "children"),
-    Input("stored-data", "data"),  # Input from the Store component
-    Input("fit-params", "data"),  # view params
-    Input("roc_curves", "data"),
-    Input("raw-file", "data"),
-)
-def display_stored_data(stored_data, fitted_params, roc_curves, raw_files):
-    if stored_data and fitted_params and roc_curves and raw_files:
-        # Convert the data to a readable format (e.g., string)
-        data_string_data = str(stored_data)
-        data_string_params = str(fitted_params)
-        data_string_roc = str(roc_curves)
-        data_string_raw = str(raw_files)
-        # Return the data string
-        return data_string_data, data_string_params, data_string_roc, data_string_raw
-    else:
-        return (
-            "No data stored yet.",
-            "No parameters stored yet.",
-            "No ROC data stored yet.",
-            "No files stored yet.",
-        )
+# @app.callback(
+#    Output("output-data", "children"),  # Output to display the data
+#    Output("output-params", "children"),  # Output to store the data
+#    Output("output-roc", "children"),
+#    Output("output-raw", "children"),
+#    Input("stored-data", "data"),  # Input from the Store component
+#    Input("fit-params", "data"),  # view params
+#    Input("roc_curves", "data"),
+#    Input("raw-file", "data"),
+# )
+# def display_stored_data(stored_data, fitted_params, roc_curves, raw_files):
+#    if stored_data and fitted_params and roc_curves and raw_files:
+#        # Convert the data to a readable format (e.g., string)
+#        data_string_data = str(stored_data)
+#        data_string_params = str(fitted_params)
+#        data_string_roc = str(roc_curves)
+#        data_string_raw = str(raw_files)
+#        # Return the data string
+#        return data_string_data, data_string_params, data_string_roc, data_string_raw
+#    else:
+#        return (
+#            "No data stored yet.",
+#            "No parameters stored yet.",
+#            "No ROC data stored yet.",
+#            "No files stored yet.",
+#        )
 
 
 # Store data ready to graph
@@ -618,7 +621,7 @@ def update_graph(
                     go.Box(  # positive points  #draw original data points in boxplot below x axis
                         x=column_data["positive"]["data"],
                         marker_symbol="line-ns-open",
-                        marker_color="red",
+                        marker_color=POSITIVE,
                         boxpoints="all",
                         jitter=1,
                         fillcolor="rgba(255,255,255,0)",
@@ -637,7 +640,7 @@ def update_graph(
                         x=positive_bar_center,
                         y=positive_hist,
                         name="Positives",
-                        marker_color="red",
+                        marker_color=POSITIVE,
                         width=positive_bar_widths,
                     ),
                     row=1,
@@ -648,7 +651,7 @@ def update_graph(
             if 3 in pos_chart_types and pos_fit_dist != "none":  # Stat. Fit (Line)
                 pos_params = parameter_data["positive"][pos_fit_dist]
                 positive_dist = getattr(stats, pos_fit_dist)
-                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
+                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
                 positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
                 fig2.add_trace(
                     go.Scatter(
@@ -656,7 +659,7 @@ def update_graph(
                         y=positive_pdf,
                         mode="lines",
                         name="Positives",
-                        line_color="red",
+                        line_color=POSITIVE,
                     ),
                     row=1,
                     col=1,
@@ -700,7 +703,7 @@ def update_graph(
             if 3 in neg_chart_types and neg_fit_dist != "none":  # Stat. Fit (Line)
                 neg_params = parameter_data["negative"][neg_fit_dist]
                 negative_dist = getattr(stats, neg_fit_dist)
-                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
+                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
                 negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
                 fig2.add_trace(
                     go.Scatter(
@@ -708,7 +711,7 @@ def update_graph(
                         y=negative_pdf,
                         mode="lines",
                         name="Negatives",
-                        line_color="royalblue",
+                        line_color=NEGATIVE,
                     ),
                     row=1,
                     col=1,
@@ -750,7 +753,7 @@ def update_graph(
             if 3 in unknown_chart_types and unknown_fit_dist != "none":
                 unknown_params = parameter_data["unknown"][unknown_fit_dist]
                 unknown_dist = getattr(stats, unknown_fit_dist)
-                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 100)
+                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
                 unknown_pdf = unknown_dist.pdf(x_range_for_pdf, **unknown_params)
                 fig2.add_trace(
                     go.Scatter(
