@@ -7,6 +7,7 @@ from scipy import stats
 import base64
 import io
 
+import pages.analysis
 import layout2
 import utils
 
@@ -34,6 +35,7 @@ app = Dash(
     ],
     external_scripts=["assets/dropdown_tooltips.js"],
 )
+app.layout = pages.analysis.layout
 app.layout = layout2.layout
 
 

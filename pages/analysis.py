@@ -2,8 +2,6 @@ from dash import dcc, html
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag  # AgGrid
 
-colors = {"background": "#FFFFFF", "text": "#2E2D29"}
-
 navbar = dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Analysis", class_name="text-light", href="#")),
@@ -221,6 +219,7 @@ alert_fail = html.Div(
             color="danger",
             dismissable=True,
             is_open=True,
+            className="d-flex align-items-center",
         ),
     ],
 )
@@ -237,13 +236,13 @@ alert_warning = html.Div(
             color="warning",
             dismissable=True,
             is_open=True,
+            className="d-flex align-items-center",
         ),
     ],
 )
 
 layout = dbc.Container(
-    style={"backgroundColor": colors["background"]},
-    children=[  # Use dbc.Container
+    children=[
         html.Div(id="error-message"),  # Add a div to display error message
         # Top Row: Header and Upload
         dbc.Row(
@@ -405,51 +404,6 @@ layout = dbc.Container(
             ],
             class_name="mb-3",
         ),  # Add margin-bottom to the middle row
-        # Bottom Rows: Sliders and Buttons
-        #        dbc.Row(
-        #            [
-        #                dbc.Col(
-        #                    dbc.Button(
-        #                        id="range-reset",
-        #                        n_clicks=0,
-        #                        class_name="bi bi-arrow-clockwise py-0 px-1",
-        #                    ),
-        #                    width="auto",
-        #                ),  # Add Bootstrap margin-end
-        #                dbc.Col(
-        #                    dcc.RangeSlider(
-        #                        id="range-slider",
-        #                        min=0,
-        #                        max=100,
-        #                        # dots=False,
-        #                        value=[0, 100],
-        #                        #            className="mb-3",  # Add margin-bottom
-        #                    ),
-        #                    width=True,
-        #                ),
-        #            ],
-        #            align="center",
-        #        ),
-        #        dbc.Row(
-        #            [
-        #                dbc.Col(
-        #                    dbc.Button(id="auto-slide", class_name="bi bi-graph-up py-0 px-1"),
-        #                    width="auto",
-        #                ),
-        #                dbc.Col(
-        #                    dcc.Slider(
-        #                        id="slider-position",
-        #                        min=0,
-        #                        max=100,
-        #                        value=0,
-        #                        tooltip={"placement": "top", "always_visible": True},
-        #                    ),
-        #                    width=True,
-        #                ),
-        #            ],
-        #            align="center",
-        #        ),
-        # class_name="p-2 border",
         #### dcc.Store Debugger ####
         # html.Div(id="output-data", class_name="mt-3"),  # Component to display the data
         # html.Div(id="output-params", class_name="mt-3"),  # Component to display the data
