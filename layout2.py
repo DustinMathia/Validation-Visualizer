@@ -7,7 +7,7 @@ colors = {"background": "#FFFFFF", "text": "#2E2D29"}
 navbar = dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Analysis", class_name="text-light", href="#")),
-        dbc.NavItem(dbc.NavLink("Upload", class_name="text-light", href="#")),
+        dbc.NavItem(dbc.NavLink("Data-Manager", class_name="text-light", href="#")),
         dbc.NavItem(dbc.NavLink("Help", class_name="text-light", href="#")),
     ],
     brand=html.A(
@@ -134,7 +134,7 @@ unknown_buttons = html.Div(
                     id="unk-btn-1",
                     n_clicks=0,
                     color="primary",
-                    outline=False,
+                    outline=True,
                 ),
                 dbc.Button(
                     "Hist.", id="unk-btn-2", n_clicks=0, color="primary", outline=False
@@ -154,6 +154,92 @@ unknown_buttons = html.Div(
     className="unknown-group",
 )
 
+threshold_slider = html.Div(
+    [
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Button(
+                        id="auto-slide", class_name="bi bi-calculator py-0 px-1"
+                    ),
+                    width="auto",
+                ),
+                dbc.Col(
+                    dcc.Slider(
+                        id="slider-position",
+                        min=0,
+                        max=100,
+                        value=0,
+                        tooltip={"placement": "top", "always_visible": True},
+                    ),
+                    width=True,
+                ),
+            ],
+            align="center",
+        ),
+    ],
+    className="p-2 border",
+)
+
+range_slider = html.Div(
+    [
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Button(
+                        id="range-reset",
+                        n_clicks=0,
+                        class_name="bi bi-arrow-clockwise py-0 px-1",
+                    ),
+                    width="auto",
+                ),  # Add Bootstrap margin-end
+                dbc.Col(
+                    dcc.RangeSlider(
+                        id="range-slider",
+                        min=0,
+                        max=100,
+                        # dots=False,
+                        value=[0, 100],
+                        #            className="mb-3",  # Add margin-bottom
+                    ),
+                    width=True,
+                ),
+            ],
+            align="center",
+        ),
+    ]
+)
+
+alert_fail = html.Div(
+    [
+        dbc.Alert(
+            [
+                html.I(className="bi bi-x-octagon-fill me-2"),
+                "Hello! I am an alert",
+            ],
+            id="alert-fail",
+            color="danger",
+            dismissable=True,
+            is_open=True,
+        ),
+    ],
+)
+
+
+alert_warning = html.Div(
+    [
+        dbc.Alert(
+            [
+                html.I(className="bi bi-exclamation-triangle-fill me-2"),
+                "Hello! I am an alert",
+            ],
+            id="alert-warning",
+            color="warning",
+            dismissable=True,
+            is_open=True,
+        ),
+    ],
+)
 
 layout = dbc.Container(
     style={"backgroundColor": colors["background"]},
@@ -163,25 +249,28 @@ layout = dbc.Container(
         dbc.Row(
             [
                 navbar,
-                dbc.Col(
-                    dcc.Upload(
-                        id="upload-data",
-                        children=html.Div(
-                            ["Drag and Drop or ", html.A("Select Files")]
-                        ),
-                        style={
-                            "height": "60px",
-                            "lineHeight": "60px",
-                            "borderWidth": "1px",
-                            "borderStyle": "dashed",
-                            "borderRadius": "5px",
-                            "textAlign": "center",
-                            "margin": "10px",
-                        },
-                        multiple=True,  # Allow multiple files to be uploaded
-                    ),
-                    width=12,
-                ),
+                alert_fail,
+                alert_warning,
+                threshold_slider,
+                # dbc.Col(
+                #     dcc.Upload(
+                #         id="upload-data",
+                #         children=html.Div(
+                #             ["Drag and Drop or ", html.A("Select Files")]
+                #         ),
+                #         style={
+                #             "height": "60px",
+                #             "lineHeight": "60px",
+                #             "borderWidth": "1px",
+                #             "borderStyle": "dashed",
+                #             "borderRadius": "5px",
+                #             "textAlign": "center",
+                #             "margin": "10px",
+                #         },
+                #         multiple=True,  # Allow multiple files to be uploaded
+                #     ),
+                #     width=12,
+                # ),
             ]
         ),
         dcc.Store(id="raw-file", data={}),
@@ -250,13 +339,18 @@ layout = dbc.Container(
                 # Middle Column: Main Plot
                 dbc.Col(
                     [
-                        dcc.Graph(
-                            id="graph",
-                            style={
-                                "width": "100%",
-                                "height": "525px",
-                            },  # Set a fixed height or make it responsive
-                        )
+                        dbc.Row(
+                            dcc.Graph(
+                                id="graph",
+                                style={
+                                    "width": "100%",
+                                    "height": "525px",
+                                },  # Set a fixed height or make it responsive
+                            )
+                        ),
+                        dbc.Row(
+                            range_slider,
+                        ),
                     ],
                     width=5,
                     class_name="p-2 border",
@@ -312,49 +406,49 @@ layout = dbc.Container(
             class_name="mb-3",
         ),  # Add margin-bottom to the middle row
         # Bottom Rows: Sliders and Buttons
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Button(
-                        id="range-reset",
-                        n_clicks=0,
-                        class_name="bi bi-arrow-clockwise py-0 px-1",
-                    ),
-                    width="auto",
-                ),  # Add Bootstrap margin-end
-                dbc.Col(
-                    dcc.RangeSlider(
-                        id="range-slider",
-                        min=0,
-                        max=100,
-                        # dots=False,
-                        value=[0, 100],
-                        #            className="mb-3",  # Add margin-bottom
-                    ),
-                    width=True,
-                ),
-            ],
-            align="center",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Button(id="auto-slide", class_name="bi bi-graph-up py-0 px-1"),
-                    width="auto",
-                ),
-                dbc.Col(
-                    dcc.Slider(
-                        id="slider-position",
-                        min=0,
-                        max=100,
-                        value=0,
-                        tooltip={"placement": "top", "always_visible": True},
-                    ),
-                    width=True,
-                ),
-            ],
-            align="center",
-        ),
+        #        dbc.Row(
+        #            [
+        #                dbc.Col(
+        #                    dbc.Button(
+        #                        id="range-reset",
+        #                        n_clicks=0,
+        #                        class_name="bi bi-arrow-clockwise py-0 px-1",
+        #                    ),
+        #                    width="auto",
+        #                ),  # Add Bootstrap margin-end
+        #                dbc.Col(
+        #                    dcc.RangeSlider(
+        #                        id="range-slider",
+        #                        min=0,
+        #                        max=100,
+        #                        # dots=False,
+        #                        value=[0, 100],
+        #                        #            className="mb-3",  # Add margin-bottom
+        #                    ),
+        #                    width=True,
+        #                ),
+        #            ],
+        #            align="center",
+        #        ),
+        #        dbc.Row(
+        #            [
+        #                dbc.Col(
+        #                    dbc.Button(id="auto-slide", class_name="bi bi-graph-up py-0 px-1"),
+        #                    width="auto",
+        #                ),
+        #                dbc.Col(
+        #                    dcc.Slider(
+        #                        id="slider-position",
+        #                        min=0,
+        #                        max=100,
+        #                        value=0,
+        #                        tooltip={"placement": "top", "always_visible": True},
+        #                    ),
+        #                    width=True,
+        #                ),
+        #            ],
+        #            align="center",
+        #        ),
         # class_name="p-2 border",
         #### dcc.Store Debugger ####
         # html.Div(id="output-data", class_name="mt-3"),  # Component to display the data
