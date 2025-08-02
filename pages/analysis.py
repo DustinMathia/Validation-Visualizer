@@ -199,31 +199,8 @@ layout = dbc.Container(
         dbc.Row(
             [
                 threshold_slider,
-                # dbc.Col(
-                #     dcc.Upload(
-                #         id="upload-data",
-                #         children=html.Div(
-                #             ["Drag and Drop or ", html.A("Select Files")]
-                #         ),
-                #         style={
-                #             "height": "60px",
-                #             "lineHeight": "60px",
-                #             "borderWidth": "1px",
-                #             "borderStyle": "dashed",
-                #             "borderRadius": "5px",
-                #             "textAlign": "center",
-                #             "margin": "10px",
-                #         },
-                #         multiple=True,  # Allow multiple files to be uploaded
-                #     ),
-                #     width=12,
-                # ),
             ]
         ),
-        dcc.Store(id="raw-file", data={}),
-        dcc.Store(id="stored-data", data={}),
-        dcc.Store(id="fit-params", data={}),
-        dcc.Store(id="roc_curves", data={}),
         # Middle Row: Left Panel, Main Plot, Right Tabs
         dbc.Row(
             [

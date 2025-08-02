@@ -1,5 +1,5 @@
 import dash
-from dash import Dash, html, callback, Input, Output, State, ctx, ALL, no_update
+from dash import Dash, html, callback, Input, Output, State, ctx, ALL, no_update, dcc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
@@ -39,7 +39,6 @@ navbar = dbc.NavbarSimple(
             align="center",
             class_name="g-0",
         ),
-        href="/",
     ),
     color="primary",
     dark=True,
@@ -56,7 +55,7 @@ alert_fail = html.Div(
             id="alert-fail",
             color="danger",
             dismissable=True,
-            is_open=True,
+            is_open=False,
             className="d-flex align-items-center",
         ),
     ],
@@ -73,7 +72,7 @@ alert_warning = html.Div(
             id="alert-warning",
             color="warning",
             dismissable=True,
-            is_open=True,
+            is_open=False,
             className="d-flex align-items-center",
         ),
     ],
@@ -96,6 +95,10 @@ app.layout = html.Div(
         alert_fail,
         alert_warning,
         dash.page_container,
+        dcc.Store(id="raw-file", data={}, storage_type="session"),
+        dcc.Store(id="stored-data", data={}, storage_type="session"),
+        dcc.Store(id="fit-params", data={}, storage_type="session"),
+        dcc.Store(id="roc_curves", data={}, storage_type="session"),
     ]
 )
 
@@ -134,7 +137,8 @@ app.layout = html.Div(
     Output("fit-params", "data", allow_duplicate=True),  # Output to store the data
     Output("roc_curves", "data", allow_duplicate=True),
     Output("raw-file", "data", allow_duplicate=True),
-    Output("error-message", "children"),  # Output to display the error
+    Output("alert-fail", "children"),
+    Output("alert-fail", "is_open"),
     Input("upload-data", "contents"),  # Input from the upload component
     State("upload-data", "filename"),  # State to get the filename
     State("stored-data", "data"),  # State to get existing stored data
@@ -222,6 +226,7 @@ def store_file(
                 all_files_roc,
                 all_files_raw,
                 html.Div(error_messages, style={"color": "red"}),
+                True,
             )
         else:
             return (
@@ -230,6 +235,7 @@ def store_file(
                 all_files_roc,
                 all_files_raw,
                 html.Div("", style={"color": "green"}),
+                False,
             )
     # If list_of_contents is None (e.g., initial load if not prevented, or no files selected)
     return (
@@ -238,6 +244,7 @@ def store_file(
         all_files_roc,
         all_files_raw,
         html.Div("No File Uploaded", style={"color": "green"}),
+        False,
     )
 
 
@@ -599,47 +606,40 @@ def update_graph(
     # Convert the button classes to a list of selected options for each group
     pos_chart_types = []
     if not pos_btn1_outline:
-        pos_chart_types.append(1)
+        pos_chart_types.append("rug")
     if not pos_btn2_outline:
-        pos_chart_types.append(2)
+        pos_chart_types.append("hist")
     if not pos_btn3_outline:
-        pos_chart_types.append(3)
+        pos_chart_types.append("stat")
 
     neg_chart_types = []
     if not neg_btn1_outline:
-        neg_chart_types.append(1)
+        neg_chart_types.append("rug")
     if not neg_btn2_outline:
-        neg_chart_types.append(2)
+        neg_chart_types.append("hist")
     if not neg_btn3_outline:
-        neg_chart_types.append(3)
+        neg_chart_types.append("stat")
 
     unknown_chart_types = []
     if not unk_btn1_outline:
-        unknown_chart_types.append(1)
+        unknown_chart_types.append("rug")
     if not unk_btn2_outline:
-        unknown_chart_types.append(2)
+        unknown_chart_types.append("hist")
     if not unk_btn3_outline:
-        unknown_chart_types.append(3)
+        unknown_chart_types.append("stat")
 
     # Only check for fundamental data needed for any graph
-    if not (
-        stored_data and selected_file and selected_column
-    ):  # and fitted_params and roc_data:
-        # Return empty figures and default slider values
+    if not (stored_data and selected_file and selected_column):
         return go.Figure()
 
     column_data = stored_data.get(selected_file, {}).get(selected_column)
     parameter_data = fitted_params.get(selected_file, {}).get(selected_column)
-    roc_column = roc_data.get(selected_file, {}).get(selected_column)
     file_data = stored_data.get(selected_file, {})
     col_data = file_data.get(selected_column, {})
 
     positive_data = np.array(col_data.get("positive", {}).get("data", []))
     negative_data = np.array(col_data.get("negative", {}).get("data", []))
     unknown_data = np.array(col_data.get("unknown", {}).get("data", []))
-
-    range_min = col_data.get("range_min", 0)
-    range_max = col_data.get("range_max", 100)
 
     fig2 = make_subplots(
         rows=2,
@@ -679,9 +679,9 @@ def update_graph(
 
         # Positive Trace
         if positive_data.size > 0:
-            if 1 in pos_chart_types:  # Rug plot (represented by Box plot for jitter)
+            if "rug" in pos_chart_types:
                 fig2.add_trace(
-                    go.Box(  # positive points  #draw original data points in boxplot below x axis
+                    go.Box(
                         x=column_data["positive"]["data"],
                         marker_symbol="line-ns-open",
                         marker_color=POSITIVE,
@@ -695,9 +695,9 @@ def update_graph(
                     ),
                     row=2,
                     col=1,
-                )  # Plot on main graph area
+                )
 
-            if 2 in pos_chart_types:  # Bar (Histogram)
+            if "hist" in pos_chart_types:
                 fig2.add_trace(
                     go.Bar(
                         x=positive_bar_center,
@@ -711,7 +711,7 @@ def update_graph(
                     secondary_y=True,
                 )
 
-            if 3 in pos_chart_types and pos_fit_dist != "none":  # Stat. Fit (Line)
+            if "stat" in pos_chart_types and pos_fit_dist != "none":
                 pos_params = parameter_data["positive"][pos_fit_dist]
                 positive_dist = getattr(stats, pos_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
@@ -731,7 +731,7 @@ def update_graph(
 
         # Negative Trace
         if negative_data.size > 0:
-            if 1 in neg_chart_types:  # Rug plot
+            if "rug" in neg_chart_types:
                 fig2.add_trace(
                     go.Box(
                         x=column_data["negative"]["data"],
@@ -749,7 +749,7 @@ def update_graph(
                     col=1,
                 )
 
-            if 2 in neg_chart_types:  # Bar (Histogram)
+            if "hist" in neg_chart_types:
                 fig2.add_trace(
                     go.Bar(
                         x=negative_bar_center,
@@ -763,7 +763,7 @@ def update_graph(
                     secondary_y=True,
                 )
 
-            if 3 in neg_chart_types and neg_fit_dist != "none":  # Stat. Fit (Line)
+            if "stat" in neg_chart_types and neg_fit_dist != "none":
                 neg_params = parameter_data["negative"][neg_fit_dist]
                 negative_dist = getattr(stats, neg_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
@@ -783,7 +783,7 @@ def update_graph(
 
         # Unknown Trace
         if unknown_data.size > 0:
-            if 1 in unknown_chart_types:
+            if "rug" in unknown_chart_types:
                 fig2.add_trace(
                     go.Box(
                         x=column_data["unknown"]["data"],
@@ -800,7 +800,7 @@ def update_graph(
                     row=2,
                     col=1,
                 )
-            if 2 in unknown_chart_types:
+            if "hist" in unknown_chart_types:
                 fig2.add_trace(
                     go.Bar(
                         x=unknown_bar_center,
@@ -813,7 +813,7 @@ def update_graph(
                     col=1,
                     secondary_y=False,
                 )
-            if 3 in unknown_chart_types and unknown_fit_dist != "none":
+            if "stat" in unknown_chart_types and unknown_fit_dist != "none":
                 unknown_params = parameter_data["unknown"][unknown_fit_dist]
                 unknown_dist = getattr(stats, unknown_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
@@ -831,77 +831,25 @@ def update_graph(
                     secondary_y=False,
                 )
 
-        # Data points on the bottom axis (can be used for 'Rug' if not plotted above)
-        #        if positive_data.size > 0:
-        #            fig2.add_trace(
-        #                go.Box(  # positive points  #draw original data points in boxplot below x axis
-        #                    x=column_data["positive"]["data"],
-        #                    marker_symbol="line-ns-open",
-        #                    marker_color="red",
-        #                    boxpoints="all",
-        #                    jitter=1,
-        #                    fillcolor="rgba(255,255,255,0)",
-        #                    line_color="rgba(255,255,255,0)",
-        #                    hoveron="points",
-        #                    showlegend=False,
-        #                ),
-        #                row=2,
-        #                col=1,
-        #            )
-
-        #        if negative_data.size > 0:
-        #            fig2.add_trace(
-        #                go.Box(  # negative points  #draw original data points in boxplot below x axis
-        #                    x=column_data["negative"]["data"],
-        #                    marker_symbol="line-ns-open",
-        #                    marker_color="blue",
-        #                    boxpoints="all",
-        #                    jitter=1,
-        #                    fillcolor="rgba(255,255,255,0)",
-        #                    line_color="rgba(255,255,255,0)",
-        #                    hoveron="points",
-        #                    showlegend=False,
-        #                ),
-        #                row=2,
-        #                col=1,
-        #            )
-        #
-        #        if unknown_data.size > 0:
-        #            fig2.add_trace(
-        #                go.Box(  # unknown points  #draw original data points in boxplot below x axis
-        #                    x=column_data["unknown"]["data"],
-        #                    marker_symbol="line-ns-open",
-        #                    marker_color="gray",
-        #                    boxpoints="all",
-        #                    jitter=1,
-        #                    fillcolor="rgba(255,255,255,0)",
-        #                    line_color="rgba(255,255,255,0)",
-        #                    hoveron="points",
-        #                    showlegend=False,
-        #                ),
-        #                row=2,
-        #                col=1,
-        #            )
-
         fig2.add_vline(
             x=pos_x,
             line_width=3,
             line_dash="dashdot",
             line_color="orange",
             annotation_text=pos_x,
-            annotation_position="top right",  # Position above the line
+            annotation_position="top right",
             annotation_font=dict(size=18),
             row=1,
             col=1,
             secondary_y=True,
-        )  # Customize font
+        )
 
         fig2.update_yaxes(showticklabels=False, row=2, col=1)
         fig2.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
         fig2.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
         fig2.update_layout(margin=dict(l=20, r=20, t=0, b=0), showlegend=False)
 
-        return fig2  # , roc_table
+        return fig2
 
 
 if __name__ == "__main__":
