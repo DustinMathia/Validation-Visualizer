@@ -25,7 +25,7 @@ UNKNOWN = "#999"
 
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("Analysis", class_name="text-light", href="/analysis")),
+        dbc.NavItem(dbc.NavLink("Analysis", class_name="text-light", href="/")),
         dbc.NavItem(
             dbc.NavLink("Data-Manager", class_name="text-light", href="/data-manager")
         ),
@@ -39,7 +39,7 @@ navbar = dbc.NavbarSimple(
             align="center",
             class_name="g-0",
         ),
-        href="#",
+        href="/",
     ),
     color="primary",
     dark=True,
