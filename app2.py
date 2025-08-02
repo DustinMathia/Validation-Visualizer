@@ -1,17 +1,5 @@
 from logging import error
-from dash import (
-    Dash,
-    dcc,
-    html,
-    Input,
-    Output,
-    callback,
-    Input,
-    Output,
-    State,
-    ctx,
-    dash_table,
-)
+from dash import Dash, html, callback, Input, Output, State, ctx, ALL, no_update
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
@@ -24,7 +12,6 @@ import utils
 
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
-import dash_ag_grid as dag
 
 dbc_css = (
     "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates@V1.0.2/dbc.min.css"
@@ -45,9 +32,6 @@ app = Dash(
     external_scripts=["assets/dropdown_tooltips.js"],
 )
 app.layout = layout2.layout
-
-
-###### dcc.Store Debugger #######
 
 
 @app.callback(
@@ -76,9 +60,6 @@ def display_stored_data(stored_data, fitted_params, roc_curves, raw_files):
             "No ROC data stored yet.",
             "No files stored yet.",
         )
-
-
-##################################
 
 
 # Store data ready to graph
@@ -194,39 +175,14 @@ def store_file(
     )
 
 
-# Callback to select uploaded files
-@app.callback(
-    Output("file-select", "options"),
-    Output("file-select", "value"),
-    Input("stored-data", "data"),
-    State("file-select", "value"),
-)
-def update_file_select_options(stored_data, current_file_select_value):
-    if stored_data:
-        file_options = [
-            {"label": filename, "value": filename} for filename in stored_data.keys()
-        ]
-        if (
-            current_file_select_value
-            and current_file_select_value in stored_data.keys()
-        ):
-            file_value = current_file_select_value
-        else:
-            file_value = list(stored_data.keys())[0]
-    else:
-        file_options = []
-        file_value = None
-    return file_options, file_value
-
-
 # Update Stored Data
 @app.callback(
     Output("stored-data", "data", allow_duplicate=True),
     Input("slider-position", "value"),
     Input("range-slider", "value"),
     State("stored-data", "data"),
-    State("file-select", "value"),
-    State("column-select", "value"),
+    State("file-select", "label"),
+    State("column-select", "label"),
     prevent_initial_call=True,  # Prevent the callback from firing on initial load
 )
 def update_stored_data(
@@ -243,40 +199,15 @@ def update_stored_data(
         return stored_data
 
 
-# Callback to select column of uploaded files
-@app.callback(
-    Output("column-select", "options"),
-    Output("column-select", "value"),
-    Input("file-select", "value"),
-    Input("column-select", "value"),
-    State("stored-data", "data"),
-)
-def update_column_select_options(file_name, selected_column, stored_data):
-    if stored_data and file_name in stored_data:
-        # Access column names for the selected file
-        column_names = list(stored_data[file_name].keys())
-        column_options = [{"label": col, "value": col} for col in column_names]
-        if selected_column == None:
-            column_value = column_names[0]
-        else:
-            column_value = selected_column  # Set default to first column
-    else:
-        column_options = []
-        column_value = None
-    return column_options, column_value
-
-
 # Callback for range slider updates
 @callback(
-    [
-        Output("range-slider", "min"),
-        Output("range-slider", "max"),
-        Output("range-slider", "value"),
-    ],
-    Input("column-select", "value"),
+    Output("range-slider", "min"),
+    Output("range-slider", "max"),
+    Output("range-slider", "value"),
+    Input("column-select", "label"),
     Input("range-reset", "n_clicks"),
     State("stored-data", "data"),
-    State("file-select", "value"),
+    State("file-select", "label"),
 )
 def update_range_slider_range(selected_column, button, stored_data, selected_file):
     if stored_data and selected_column in stored_data.get(selected_file, {}):
@@ -297,10 +228,8 @@ def update_range_slider_range(selected_column, button, stored_data, selected_fil
 
 # Callback for slider updates
 @callback(
-    [
-        Output("slider-position", "min"),
-        Output("slider-position", "max"),
-    ],
+    Output("slider-position", "min"),
+    Output("slider-position", "max"),
     Input("range-slider", "value"),
 )
 def update_slider_range(selected_range):
@@ -316,8 +245,8 @@ def update_slider_range(selected_range):
     Input("stored-data", "data"),
     Input("fit-params", "data"),
     Input("roc_curves", "data"),
-    Input("file-select", "value"),
-    Input("column-select", "value"),
+    Input("file-select", "label"),
+    Input("column-select", "label"),
     State("slider-position", "value"),
 )
 def update_roc_plot_and_table(
@@ -373,7 +302,7 @@ def update_roc_plot_and_table(
     Output("ag-grid", "rowData"),
     Output("ag-grid", "columnDefs"),
     Input("raw-file", "data"),
-    Input("file-select", "value"),
+    Input("file-select", "label"),
 )
 def update_data_grid(raw_files, selected_file):
     # Ensure raw_files is a dictionary, even if it starts as None
@@ -391,128 +320,167 @@ def update_data_grid(raw_files, selected_file):
     return [], []  # Return empty lists if no data or file selected
 
 
-# Callbacks for the button groups
 @app.callback(
-    Output("pos-btn-1", "className"),
-    Output("pos-btn-2", "className"),
-    Output("pos-btn-3", "className"),
+    Output("pos-btn-1", "outline"),
+    Output("pos-btn-2", "outline"),
+    Output("pos-btn-3", "outline"),
     Input("pos-btn-1", "n_clicks"),
     Input("pos-btn-2", "n_clicks"),
     Input("pos-btn-3", "n_clicks"),
-    State("pos-btn-1", "className"),
-    State("pos-btn-2", "className"),
-    State("pos-btn-3", "className"),
+    State("pos-btn-1", "outline"),
+    State("pos-btn-2", "outline"),
+    State("pos-btn-3", "outline"),
 )
-def update_positive_buttons(b1, b2, b3, c1, c2, c3):
+def update_positive_buttons(b1, b2, b3, o1, o2, o3):
     button_id = ctx.triggered_id
     if not button_id:
-        return c1, c2, c3
+        return no_update, no_update, no_update
 
-    if button_id == "pos-btn-1":
-        new_c1 = (
-            "btn btn-primary"
-            if "btn-outline-primary" in c1
-            else "btn btn-outline-primary"
-        )
-        return new_c1, c2, c3
-    elif button_id == "pos-btn-2":
-        new_c2 = (
-            "btn btn-primary"
-            if "btn-outline-primary" in c2
-            else "btn btn-outline-primary"
-        )
-        return c1, new_c2, c3
-    elif button_id == "pos-btn-3":
-        new_c3 = (
-            "btn btn-primary"
-            if "btn-outline-primary" in c3
-            else "btn btn-outline-primary"
-        )
-        return c1, c2, new_c3
+    new_o1, new_o2, new_o3 = o1, o2, o3
 
-    return c1, c2, c3
+    if "pos-btn-1" == button_id:
+        new_o1 = not o1
+    elif "pos-btn-2" == button_id:
+        new_o2 = not o2
+    elif "pos-btn-3" == button_id:
+        new_o3 = not o3
+
+    return new_o1, new_o2, new_o3
 
 
 @app.callback(
-    Output("neg-btn-1", "className"),
-    Output("neg-btn-2", "className"),
-    Output("neg-btn-3", "className"),
+    Output("neg-btn-1", "outline"),
+    Output("neg-btn-2", "outline"),
+    Output("neg-btn-3", "outline"),
     Input("neg-btn-1", "n_clicks"),
     Input("neg-btn-2", "n_clicks"),
     Input("neg-btn-3", "n_clicks"),
-    State("neg-btn-1", "className"),
-    State("neg-btn-2", "className"),
-    State("neg-btn-3", "className"),
+    State("neg-btn-1", "outline"),
+    State("neg-btn-2", "outline"),
+    State("neg-btn-3", "outline"),
 )
-def update_negative_buttons(b1, b2, b3, c1, c2, c3):
+def update_negative_buttons(b1, b2, b3, o1, o2, o3):
     button_id = ctx.triggered_id
     if not button_id:
-        return c1, c2, c3
+        return no_update, no_update, no_update
 
-    if button_id == "neg-btn-1":
-        new_c1 = (
-            "btn btn-primary"
-            if "btn-outline-primary" in c1
-            else "btn btn-outline-primary"
-        )
-        return new_c1, c2, c3
-    elif button_id == "neg-btn-2":
-        new_c2 = (
-            "btn btn-primary"
-            if "btn-outline-primary" in c2
-            else "btn btn-outline-primary"
-        )
-        return c1, new_c2, c3
-    elif button_id == "neg-btn-3":
-        new_c3 = (
-            "btn btn-primary"
-            if "btn-outline-primary" in c3
-            else "btn btn-outline-primary"
-        )
-        return c1, c2, new_c3
+    new_o1, new_o2, new_o3 = o1, o2, o3
 
-    return c1, c2, c3
+    if "neg-btn-1" == button_id:
+        new_o1 = not o1
+        return new_o1, o2, o3
+    elif "neg-btn-2" == button_id:
+        new_o2 = not o2
+        return o1, new_o2, o3
+    elif "neg-btn-3" == button_id:
+        new_o3 = not o3
+        return o1, o2, new_o3
+
+    return new_o1, new_o2, new_o3
 
 
 @app.callback(
-    Output("unk-btn-1", "className"),
-    Output("unk-btn-2", "className"),
-    Output("unk-btn-3", "className"),
+    Output("unk-btn-1", "outline"),
+    Output("unk-btn-2", "outline"),
+    Output("unk-btn-3", "outline"),
     Input("unk-btn-1", "n_clicks"),
     Input("unk-btn-2", "n_clicks"),
     Input("unk-btn-3", "n_clicks"),
-    State("unk-btn-1", "className"),
-    State("unk-btn-2", "className"),
-    State("unk-btn-3", "className"),
+    State("unk-btn-1", "outline"),
+    State("unk-btn-2", "outline"),
+    State("unk-btn-3", "outline"),
 )
-def update_unknown_buttons(b1, b2, b3, c1, c2, c3):
+def update_unknown_buttons(b1, b2, b3, o1, o2, o3):
     button_id = ctx.triggered_id
     if not button_id:
-        return c1, c2, c3
+        return no_update, no_update, no_update
 
-    if button_id == "unk-btn-1":
-        new_c1 = (
-            "btn btn-primary"
-            if "btn-outline-primary" in c1
-            else "btn btn-outline-primary"
-        )
-        return new_c1, c2, c3
-    elif button_id == "unk-btn-2":
-        new_c2 = (
-            "btn btn-primary"
-            if "btn-outline-primary" in c2
-            else "btn btn-outline-primary"
-        )
-        return c1, new_c2, c3
-    elif button_id == "unk-btn-3":
-        new_c3 = (
-            "btn btn-primary"
-            if "btn-outline-primary" in c3
-            else "btn btn-outline-primary"
-        )
-        return c1, c2, new_c3
+    new_o1, new_o2, new_o3 = o1, o2, o3
 
-    return c1, c2, c3
+    if "unk-btn-1" == button_id:
+        new_o1 = not o1
+        return new_o1, o2, o3
+    elif "unk-btn-2" == button_id:
+        new_o2 = not o2
+        return o1, new_o2, o3
+    elif "unk-btn-3" == button_id:
+        new_o3 = not o3
+        return o1, o2, new_o3
+
+    return new_o1, new_o2, new_o3
+
+
+# Callback to populate the file-select dropdown menu
+@app.callback(
+    Output("file-select", "children"),
+    Input("raw-file", "data"),
+)
+def update_file_dropdown(raw_file_data):
+    if not raw_file_data:
+        return []
+
+    dropdown_items = []
+    for filename in raw_file_data.keys():
+        dropdown_items.append(
+            dbc.DropdownMenuItem(filename, id={"type": "file-item", "index": filename})
+        )
+
+    return dropdown_items
+
+
+# Callback to populate the column-select dropdown menu
+@app.callback(
+    Output("column-select", "children"),
+    Input("stored-data", "data"),
+    Input("file-select", "label"),
+)
+def update_column_dropdown(stored_data, filename):
+    # Ensure stored_data is a non-empty dictionary and a filename is selected
+    if not isinstance(stored_data, dict) or not stored_data or not filename:
+        return []
+
+    # Check if the selected file exists in the stored data
+    if filename not in stored_data:
+        return []
+
+    # Get column names from the keys of the dictionary for the selected file
+    columns = list(stored_data[filename].keys())
+
+    dropdown_items = []
+    for col in columns:
+        dropdown_items.append(
+            dbc.DropdownMenuItem(col, id={"type": "column-item", "index": col})
+        )
+
+    return dropdown_items
+
+
+# Callback to capture file selection and update the label
+@app.callback(
+    Output("file-select", "label"),
+    Input({"type": "file-item", "index": ALL}, "n_clicks"),
+    State({"type": "file-item", "index": ALL}, "id"),
+)
+def select_file(n_clicks, item_ids):
+    if not any(n_clicks):
+        return no_update
+
+    button_id = ctx.triggered_id
+    return button_id["index"]
+
+
+# Callback to capture column selection and update the label
+@app.callback(
+    Output("column-select", "label"),
+    Input({"type": "column-item", "index": ALL}, "n_clicks"),
+    State({"type": "column-item", "index": ALL}, "id"),
+)
+def select_column(n_clicks, item_ids):
+    if not any(n_clicks):
+        return no_update
+
+    button_id = ctx.triggered_id
+    return button_id["index"]
 
 
 # Update Graph Callback
@@ -522,20 +490,20 @@ def update_unknown_buttons(b1, b2, b3, c1, c2, c3):
         Input("stored-data", "data"),
         Input("fit-params", "data"),
         Input("roc_curves", "data"),
-        Input("file-select", "value"),
-        Input("column-select", "value"),  # Input from dropdown
+        Input("file-select", "label"),
+        Input("column-select", "label"),  # Input from dropdown
         Input("pos-statfit-select", "value"),  # Select fit lines
         Input("neg-statfit-select", "value"),
         Input("unknown-statfit-select", "value"),
-        Input("pos-btn-1", "className"),
-        Input("pos-btn-2", "className"),
-        Input("pos-btn-3", "className"),
-        Input("neg-btn-1", "className"),
-        Input("neg-btn-2", "className"),
-        Input("neg-btn-3", "className"),
-        Input("unk-btn-1", "className"),
-        Input("unk-btn-2", "className"),
-        Input("unk-btn-3", "className"),
+        Input("pos-btn-1", "outline"),
+        Input("pos-btn-2", "outline"),
+        Input("pos-btn-3", "outline"),
+        Input("neg-btn-1", "outline"),
+        Input("neg-btn-2", "outline"),
+        Input("neg-btn-3", "outline"),
+        Input("unk-btn-1", "outline"),
+        Input("unk-btn-2", "outline"),
+        Input("unk-btn-3", "outline"),
         State("slider-position", "value"),
         Input("range-slider", "value"),  # Input from range slider
     ],
@@ -550,41 +518,41 @@ def update_graph(
     pos_fit_dist,
     neg_fit_dist,
     unknown_fit_dist,
-    pos_btn1_class,
-    pos_btn2_class,
-    pos_btn3_class,
-    neg_btn1_class,
-    neg_btn2_class,
-    neg_btn3_class,
-    unk_btn1_class,
-    unk_btn2_class,
-    unk_btn3_class,
+    pos_btn1_outline,
+    pos_btn2_outline,
+    pos_btn3_outline,
+    neg_btn1_outline,
+    neg_btn2_outline,
+    neg_btn3_outline,
+    unk_btn1_outline,
+    unk_btn2_outline,
+    unk_btn3_outline,
     pos_x,
     range_value,
 ):
     # Convert the button classes to a list of selected options for each group
     pos_chart_types = []
-    if "btn-primary" in pos_btn1_class:
+    if not pos_btn1_outline:
         pos_chart_types.append(1)
-    if "btn-primary" in pos_btn2_class:
+    if not pos_btn2_outline:
         pos_chart_types.append(2)
-    if "btn-primary" in pos_btn3_class:
+    if not pos_btn3_outline:
         pos_chart_types.append(3)
 
     neg_chart_types = []
-    if "btn-primary" in neg_btn1_class:
+    if not neg_btn1_outline:
         neg_chart_types.append(1)
-    if "btn-primary" in neg_btn2_class:
+    if not neg_btn2_outline:
         neg_chart_types.append(2)
-    if "btn-primary" in neg_btn3_class:
+    if not neg_btn3_outline:
         neg_chart_types.append(3)
 
     unknown_chart_types = []
-    if "btn-primary" in unk_btn1_class:
+    if not unk_btn1_outline:
         unknown_chart_types.append(1)
-    if "btn-primary" in unk_btn2_class:
+    if not unk_btn2_outline:
         unknown_chart_types.append(2)
-    if "btn-primary" in unk_btn3_class:
+    if not unk_btn3_outline:
         unknown_chart_types.append(3)
 
     # Only check for fundamental data needed for any graph
@@ -659,9 +627,8 @@ def update_graph(
                         showlegend=False,
                         name="Positives Rug",
                     ),
-                    row=1,
+                    row=2,
                     col=1,
-                    secondary_y=True,
                 )  # Plot on main graph area
 
             if 2 in pos_chart_types:  # Bar (Histogram)
@@ -712,9 +679,8 @@ def update_graph(
                         showlegend=False,
                         name="Negatives Rug",
                     ),
-                    row=1,
+                    row=2,
                     col=1,
-                    secondary_y=True,
                 )
 
             if 2 in neg_chart_types:  # Bar (Histogram)
@@ -765,9 +731,8 @@ def update_graph(
                         showlegend=False,
                         name="Unknowns Rug",
                     ),
-                    row=1,
+                    row=2,
                     col=1,
-                    secondary_y=False,
                 )
             if 2 in unknown_chart_types:
                 fig2.add_trace(
@@ -801,56 +766,56 @@ def update_graph(
                 )
 
         # Data points on the bottom axis (can be used for 'Rug' if not plotted above)
-        if positive_data.size > 0:
-            fig2.add_trace(
-                go.Box(  # positive points  #draw original data points in boxplot below x axis
-                    x=column_data["positive"]["data"],
-                    marker_symbol="line-ns-open",
-                    marker_color="red",
-                    boxpoints="all",
-                    jitter=1,
-                    fillcolor="rgba(255,255,255,0)",
-                    line_color="rgba(255,255,255,0)",
-                    hoveron="points",
-                    showlegend=False,
-                ),
-                row=2,
-                col=1,
-            )
+        #        if positive_data.size > 0:
+        #            fig2.add_trace(
+        #                go.Box(  # positive points  #draw original data points in boxplot below x axis
+        #                    x=column_data["positive"]["data"],
+        #                    marker_symbol="line-ns-open",
+        #                    marker_color="red",
+        #                    boxpoints="all",
+        #                    jitter=1,
+        #                    fillcolor="rgba(255,255,255,0)",
+        #                    line_color="rgba(255,255,255,0)",
+        #                    hoveron="points",
+        #                    showlegend=False,
+        #                ),
+        #                row=2,
+        #                col=1,
+        #            )
 
-        if negative_data.size > 0:
-            fig2.add_trace(
-                go.Box(  # negative points  #draw original data points in boxplot below x axis
-                    x=column_data["negative"]["data"],
-                    marker_symbol="line-ns-open",
-                    marker_color="blue",
-                    boxpoints="all",
-                    jitter=1,
-                    fillcolor="rgba(255,255,255,0)",
-                    line_color="rgba(255,255,255,0)",
-                    hoveron="points",
-                    showlegend=False,
-                ),
-                row=2,
-                col=1,
-            )
-
-        if unknown_data.size > 0:
-            fig2.add_trace(
-                go.Box(  # unknown points  #draw original data points in boxplot below x axis
-                    x=column_data["unknown"]["data"],
-                    marker_symbol="line-ns-open",
-                    marker_color="gray",
-                    boxpoints="all",
-                    jitter=1,
-                    fillcolor="rgba(255,255,255,0)",
-                    line_color="rgba(255,255,255,0)",
-                    hoveron="points",
-                    showlegend=False,
-                ),
-                row=2,
-                col=1,
-            )
+        #        if negative_data.size > 0:
+        #            fig2.add_trace(
+        #                go.Box(  # negative points  #draw original data points in boxplot below x axis
+        #                    x=column_data["negative"]["data"],
+        #                    marker_symbol="line-ns-open",
+        #                    marker_color="blue",
+        #                    boxpoints="all",
+        #                    jitter=1,
+        #                    fillcolor="rgba(255,255,255,0)",
+        #                    line_color="rgba(255,255,255,0)",
+        #                    hoveron="points",
+        #                    showlegend=False,
+        #                ),
+        #                row=2,
+        #                col=1,
+        #            )
+        #
+        #        if unknown_data.size > 0:
+        #            fig2.add_trace(
+        #                go.Box(  # unknown points  #draw original data points in boxplot below x axis
+        #                    x=column_data["unknown"]["data"],
+        #                    marker_symbol="line-ns-open",
+        #                    marker_color="gray",
+        #                    boxpoints="all",
+        #                    jitter=1,
+        #                    fillcolor="rgba(255,255,255,0)",
+        #                    line_color="rgba(255,255,255,0)",
+        #                    hoveron="points",
+        #                    showlegend=False,
+        #                ),
+        #                row=2,
+        #                col=1,
+        #            )
 
         fig2.add_vline(
             x=pos_x,

@@ -22,6 +22,7 @@ navbar = dbc.NavbarSimple(
     ),
     color="primary",
     dark=True,
+    links_left=True,
 )
 
 positive_buttons = html.Div(
@@ -36,6 +37,7 @@ positive_buttons = html.Div(
                 {"label": "Expon. Norm.", "value": "exponnorm"},
             ],
             value="norm",
+            clearable=False,
             placeholder="Positive Stat. Fit",
             id="pos-statfit-select",
             className="mb-3",
@@ -43,16 +45,21 @@ positive_buttons = html.Div(
         dbc.ButtonGroup(
             [
                 dbc.Button(
-                    "Rug", id="pos-btn-1", n_clicks=0, className="btn btn-primary"
+                    "Rug", id="pos-btn-1", n_clicks=0, color="primary", outline=False
                 ),
                 dbc.Button(
                     "Hist.",
                     id="pos-btn-2",
                     n_clicks=0,
-                    className="btn btn-outline-primary",
+                    color="primary",
+                    outline=True,
                 ),
                 dbc.Button(
-                    "Stat. Fit", id="pos-btn-3", n_clicks=0, className="btn btn-primary"
+                    "Stat. Fit",
+                    id="pos-btn-3",
+                    n_clicks=0,
+                    color="primary",
+                    outline=False,
                 ),
             ],
             id="pos-btn-group",
@@ -74,6 +81,7 @@ negative_buttons = html.Div(
                 {"label": "Expon. Norm.", "value": "exponnorm"},
             ],
             value="norm",
+            clearable=False,
             placeholder="Negative Stat. Fit",
             id="neg-statfit-select",
             className="mb-3",
@@ -81,16 +89,21 @@ negative_buttons = html.Div(
         dbc.ButtonGroup(
             [
                 dbc.Button(
-                    "Rug", id="neg-btn-1", n_clicks=0, className="btn btn-primary"
+                    "Rug", id="neg-btn-1", n_clicks=0, color="primary", outline=False
                 ),
                 dbc.Button(
                     "Hist.",
                     id="neg-btn-2",
                     n_clicks=0,
-                    className="btn btn-outline-primary",
+                    color="primary",
+                    outline=True,
                 ),
                 dbc.Button(
-                    "Stat. Fit", id="neg-btn-3", n_clicks=0, className="btn btn-primary"
+                    "Stat. Fit",
+                    id="neg-btn-3",
+                    n_clicks=0,
+                    color="primary",
+                    outline=False,
                 ),
             ],
             id="neg-btn-group",
@@ -112,6 +125,7 @@ unknown_buttons = html.Div(
                 {"label": "Expon. Norm.", "value": "exponnorm"},
             ],
             value="norm",
+            clearable=False,
             placeholder="Unknown Stat. Fit",
             id="unknown-statfit-select",
             className="mb-3",
@@ -122,16 +136,18 @@ unknown_buttons = html.Div(
                     "Rug",
                     id="unk-btn-1",
                     n_clicks=0,
-                    className="btn btn-outline-primary",
+                    color="primary",
+                    outline=False,
                 ),
                 dbc.Button(
-                    "Hist.", id="unk-btn-2", n_clicks=0, className="btn btn-primary"
+                    "Hist.", id="unk-btn-2", n_clicks=0, color="primary", outline=False
                 ),
                 dbc.Button(
                     "Stat. Fit",
                     id="unk-btn-3",
                     n_clicks=0,
-                    className="btn btn-outline-primary",
+                    color="primary",
+                    outline=True,
                 ),
             ],
             id="unk-btn-group",
@@ -185,21 +201,22 @@ layout = dbc.Container(
                             [
                                 html.Div(
                                     [
-                                        dcc.Dropdown(
-                                            options=[],
-                                            placeholder="Select File",
+                                        dbc.DropdownMenu(
+                                            label="Select File",
                                             id="file-select",
-                                        ),
-                                        dcc.Dropdown(
-                                            id="column-select",
-                                            options=[],
-                                            placeholder="Select Column",
-                                            multi=False,  # Graph only one column at a time, for now
                                             className="mb-3",
                                         ),
-                                    ],
-                                    className="mb-3",
-                                ),  # Add margin-bottom
+                                    ]
+                                ),
+                                html.Div(
+                                    [
+                                        dbc.DropdownMenu(
+                                            label="Select Column",
+                                            id="column-select",
+                                            className="mb-3",
+                                        ),
+                                    ]
+                                ),
                                 html.Hr(
                                     style={
                                         "width": "100%",
@@ -309,6 +326,7 @@ layout = dbc.Container(
                             id="range-slider",
                             min=0,
                             max=100,
+                            dots=False,
                             value=[0, 100],
                             className="mb-3",  # Add margin-bottom
                         ),
@@ -318,7 +336,13 @@ layout = dbc.Container(
                 dbc.Col(
                     [
                         html.Button("Auto", id="auto-slide", className="me-2"),
-                        dcc.Slider(id="slider-position", min=0, max=100, value=0),
+                        dcc.Slider(
+                            id="slider-position",
+                            min=0,
+                            max=100,
+                            value=0,
+                            tooltip={"placement": "top", "always_visible": True},
+                        ),
                     ],
                     width=12,
                 ),

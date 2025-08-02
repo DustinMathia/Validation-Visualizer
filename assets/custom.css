@@ -4,20 +4,42 @@
 This CSS ensures that the buttons in a dbc.ButtonGroup are
 styled correctly to look like a single, seamless component.
 */
+
+/* Ensures the buttons within a btn-group have square corners */
 .btn-group .btn {
-  border-radius: 0;
+    border-radius: 0;
 }
 
+/* Ensures the border alignment is correct */
 .btn-group .btn:not(:first-child) {
-  margin-left: -1px;
+    margin-left: -1px;
 }
 
 .btn-group .btn:first-child {
-  border-top-left-radius: 0.25rem;
-  border-bottom-left-radius: 0.25rem;
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
 }
 
 .btn-group .btn:last-child {
-  border-top-right-radius: 0.25rem;
-  border-bottom-right-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* Ensures the dropdown menu can overflow its container */
+.dash-dropdown {
+    overflow: visible;
+}
+
+/* Positions the dropdown menu over other elements with a high z-index */
+.dash-dropdown-menu {
+    position: absolute;
+    z-index: 1000;
+}
+
+/* Truncates the text of the dropdown button to prevent overflow */
+.dropdown-toggle {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 100%;
 }
