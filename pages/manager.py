@@ -27,5 +27,9 @@ layout = dbc.Container(
             ),
             width=12,
         ),
+        dag.AgGrid(
+            className="ag-theme-balham",
+            # other props
+        ),
     ]
 )

@@ -4,6 +4,8 @@ import plotly.graph_objects as go
 import bisect
 import math
 
+THRESHOLD = "#d47500"
+
 
 def manipulate_data(data_list, column_names):
     manipulated_data = {}
@@ -276,7 +278,7 @@ def plot_roc_curve(roc_data, threshold_index):
                 x=[thresh_pt_x],
                 y=[thresh_pt_y],
                 mode="markers",
-                marker=dict(color="orange", size=10, symbol="circle"),
+                marker=dict(color=THRESHOLD, size=15, symbol="circle"),
                 name="Threshold Point",
             )
         )
@@ -285,7 +287,7 @@ def plot_roc_curve(roc_data, threshold_index):
             yaxis_title="True Positive Rate (TPR)",
             xaxis=dict(range=[0, 1]),
             yaxis=dict(range=[0, 1]),
-            # hovermode="x unified" # Improves hover experience
+            dragmode=False,
         )
     return fig
 

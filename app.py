@@ -21,6 +21,7 @@ load_figure_template(["spacelab"])
 POSITIVE = "#cd0200"
 NEGATIVE = "#446e9b"
 UNKNOWN = "#999"
+THRESHOLD = "#d47500"
 
 
 navbar = dbc.NavbarSimple(
@@ -95,68 +96,45 @@ app.layout = html.Div(
         alert_fail,
         alert_warning,
         dash.page_container,
+        dcc.Store(id="uploaded-files-list", data=[], storage_type="session"),
         dcc.Store(id="raw-file", data={}, storage_type="session"),
-        dcc.Store(id="stored-data", data={}, storage_type="session"),
+        dcc.Store(id="manipulated-data", data={}, storage_type="session"),
         dcc.Store(id="fit-params", data={}, storage_type="session"),
-        dcc.Store(id="roc_curves", data={}, storage_type="session"),
+        dcc.Store(id="roc-curves", data={}, storage_type="session"),
+        dcc.Store(id="slider-values", data={}, storage_type="session"),
+        dcc.Store(id="active-file", data=None, storage_type="session"),
     ]
 )
 
 
-# @app.callback(
-#    Output("output-data", "children"),  # Output to display the data
-#    Output("output-params", "children"),  # Output to store the data
-#    Output("output-roc", "children"),
-#    Output("output-raw", "children"),
-#    Input("stored-data", "data"),  # Input from the Store component
-#    Input("fit-params", "data"),  # view params
-#    Input("roc_curves", "data"),
-#    Input("raw-file", "data"),
-# )
-# def display_stored_data(stored_data, fitted_params, roc_curves, raw_files):
-#    if stored_data and fitted_params and roc_curves and raw_files:
-#        # Convert the data to a readable format (e.g., string)
-#        data_string_data = str(stored_data)
-#        data_string_params = str(fitted_params)
-#        data_string_roc = str(roc_curves)
-#        data_string_raw = str(raw_files)
-#        # Return the data string
-#        return data_string_data, data_string_params, data_string_roc, data_string_raw
-#    else:
-#        return (
-#            "No data stored yet.",
-#            "No parameters stored yet.",
-#            "No ROC data stored yet.",
-#            "No files stored yet.",
-#        )
-
-
 # Store data ready to graph
 @callback(
-    Output("stored-data", "data", allow_duplicate=True),  # Output to store the data
-    Output("fit-params", "data", allow_duplicate=True),  # Output to store the data
-    Output("roc_curves", "data", allow_duplicate=True),
+    Output("manipulated-data", "data", allow_duplicate=True),
+    Output("fit-params", "data", allow_duplicate=True),
+    Output("roc-curves", "data", allow_duplicate=True),
     Output("raw-file", "data", allow_duplicate=True),
     Output("alert-fail", "children"),
     Output("alert-fail", "is_open"),
-    Input("upload-data", "contents"),  # Input from the upload component
-    State("upload-data", "filename"),  # State to get the filename
-    State("stored-data", "data"),  # State to get existing stored data
-    State("fit-params", "data"),  # State to get existing fit params
-    State("roc_curves", "data"),  # State to get existing roc curves
+    Input("upload-data", "contents"),
+    State("upload-data", "filename"),
+    State("manipulated-data", "data"),
+    State("fit-params", "data"),
+    State("roc-curves", "data"),
     State("raw-file", "data"),
-    prevent_initial_call=True,  # Prevent the callback from firing on initial load
+    prevent_initial_call=True,
 )
 def store_file(
     list_of_contents,
     list_of_filenames,
-    existing_stored_data,
+    existing_manipulated_data,
     existing_fitted_params,
     existing_roc_curves,
     existing_raw,
 ):
     # Dictionary to store all file data
-    all_files_data = existing_stored_data if existing_stored_data is not None else {}
+    all_files_data = (
+        existing_manipulated_data if existing_manipulated_data is not None else {}
+    )
     all_files_fit_params = (
         existing_fitted_params if existing_fitted_params is not None else {}
     )
@@ -250,26 +228,30 @@ def store_file(
 
 # Update Stored Data
 @app.callback(
-    Output("stored-data", "data", allow_duplicate=True),
+    Output("manipulated-data", "data", allow_duplicate=True),
     Input("slider-position", "value"),
     Input("range-slider", "value"),
-    State("stored-data", "data"),
+    State("manipulated-data", "data"),
     State("file-select", "label"),
     State("column-select", "label"),
     prevent_initial_call=True,  # Prevent the callback from firing on initial load
 )
-def update_stored_data(
-    slider_position, range_slider_value, stored_data, selected_file, selected_column
+def update_manipulated_data(
+    slider_position,
+    range_slider_value,
+    manipulated_data,
+    selected_file,
+    selected_column,
 ):
-    if stored_data and selected_file and selected_column:
-        column_data = stored_data[selected_file][selected_column]
+    if manipulated_data and selected_file and selected_column:
+        column_data = manipulated_data[selected_file][selected_column]
         column_data["slider_value"] = slider_position
         column_data["range_value"] = range_slider_value
         # Update stored data
-        stored_data[selected_file].update({selected_column: column_data})
-        return stored_data
+        manipulated_data[selected_file].update({selected_column: column_data})
+        return manipulated_data
     else:
-        return stored_data
+        return manipulated_data
 
 
 # Callback for range slider updates
@@ -279,12 +261,12 @@ def update_stored_data(
     Output("range-slider", "value"),
     Input("column-select", "label"),
     Input("range-reset", "n_clicks"),
-    State("stored-data", "data"),
+    State("manipulated-data", "data"),
     State("file-select", "label"),
 )
-def update_range_slider_range(selected_column, button, stored_data, selected_file):
-    if stored_data and selected_column in stored_data.get(selected_file, {}):
-        column_data = stored_data[selected_file][selected_column]
+def update_range_slider_range(selected_column, button, manipulated_data, selected_file):
+    if manipulated_data and selected_column in manipulated_data.get(selected_file, {}):
+        column_data = manipulated_data[selected_file][selected_column]
 
         range_min = column_data["range_min"]
         range_max = column_data["range_max"]
@@ -315,19 +297,19 @@ def update_slider_range(selected_range):
 @app.callback(
     Output("roc_plot", "figure"),
     Output("roc_table", "figure"),
-    Input("stored-data", "data"),
+    Input("manipulated-data", "data"),
     Input("fit-params", "data"),
-    Input("roc_curves", "data"),
+    Input("roc-curves", "data"),
     Input("file-select", "label"),
     Input("column-select", "label"),
     State("slider-position", "value"),
 )
 def update_roc_plot_and_table(
-    stored_data, fitted_params, roc_data, selected_file, selected_column, pos_x
+    manipulated_data, fitted_params, roc_data, selected_file, selected_column, pos_x
 ):
     # Only check for fundamental data needed for any graph
     if not (
-        stored_data and selected_file and selected_column
+        manipulated_data and selected_file and selected_column
     ):  # and fitted_params and roc_data:
         # Return empty figures and default slider values
         return go.Figure(), go.Figure()
@@ -504,20 +486,20 @@ def update_file_dropdown(raw_file_data):
 # Callback to populate the column-select dropdown menu
 @app.callback(
     Output("column-select", "children"),
-    Input("stored-data", "data"),
+    Input("manipulated-data", "data"),
     Input("file-select", "label"),
 )
-def update_column_dropdown(stored_data, filename):
-    # Ensure stored_data is a non-empty dictionary and a filename is selected
-    if not isinstance(stored_data, dict) or not stored_data or not filename:
+def update_column_dropdown(manipulated_data, filename):
+    # Ensure manipulated_data is a non-empty dictionary and a filename is selected
+    if not isinstance(manipulated_data, dict) or not manipulated_data or not filename:
         return []
 
     # Check if the selected file exists in the stored data
-    if filename not in stored_data:
+    if filename not in manipulated_data:
         return []
 
     # Get column names from the keys of the dictionary for the selected file
-    columns = list(stored_data[filename].keys())
+    columns = list(manipulated_data[filename].keys())
 
     dropdown_items = []
     for col in columns:
@@ -560,9 +542,9 @@ def select_column(n_clicks, item_ids):
 @app.callback(
     Output("graph", "figure"),
     [
-        Input("stored-data", "data"),
+        Input("manipulated-data", "data"),
         Input("fit-params", "data"),
-        Input("roc_curves", "data"),
+        Input("roc-curves", "data"),
         Input("file-select", "label"),
         Input("column-select", "label"),  # Input from dropdown
         Input("pos-statfit-select", "value"),  # Select fit lines
@@ -583,7 +565,7 @@ def select_column(n_clicks, item_ids):
     prevent_initial_call=True,  # Prevent the callback from firing on initial load
 )
 def update_graph(
-    stored_data,
+    manipulated_data,
     fitted_params,
     roc_data,
     selected_file,
@@ -629,12 +611,12 @@ def update_graph(
         unknown_chart_types.append("stat")
 
     # Only check for fundamental data needed for any graph
-    if not (stored_data and selected_file and selected_column):
+    if not (manipulated_data and selected_file and selected_column):
         return go.Figure()
 
-    column_data = stored_data.get(selected_file, {}).get(selected_column)
+    column_data = manipulated_data.get(selected_file, {}).get(selected_column)
     parameter_data = fitted_params.get(selected_file, {}).get(selected_column)
-    file_data = stored_data.get(selected_file, {})
+    file_data = manipulated_data.get(selected_file, {})
     col_data = file_data.get(selected_column, {})
 
     positive_data = np.array(col_data.get("positive", {}).get("data", []))
@@ -676,110 +658,6 @@ def update_graph(
         positive_bar_center = positive_bin_edges[:-1] + positive_bar_widths / 2
         negative_bar_center = negative_bin_edges[:-1] + negative_bar_widths / 2
         unknown_bar_center = unknown_bin_edges[:-1] + unknown_bar_widths / 2
-
-        # Positive Trace
-        if positive_data.size > 0:
-            if "rug" in pos_chart_types:
-                fig2.add_trace(
-                    go.Box(
-                        x=column_data["positive"]["data"],
-                        marker_symbol="line-ns-open",
-                        marker_color=POSITIVE,
-                        boxpoints="all",
-                        jitter=1,
-                        fillcolor="rgba(255,255,255,0)",
-                        line_color="rgba(255,255,255,0)",
-                        hoveron="points",
-                        showlegend=False,
-                        name="Positives Rug",
-                    ),
-                    row=2,
-                    col=1,
-                )
-
-            if "hist" in pos_chart_types:
-                fig2.add_trace(
-                    go.Bar(
-                        x=positive_bar_center,
-                        y=positive_hist,
-                        name="Positives",
-                        marker_color=POSITIVE,
-                        width=positive_bar_widths,
-                    ),
-                    row=1,
-                    col=1,
-                    secondary_y=True,
-                )
-
-            if "stat" in pos_chart_types and pos_fit_dist != "none":
-                pos_params = parameter_data["positive"][pos_fit_dist]
-                positive_dist = getattr(stats, pos_fit_dist)
-                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
-                positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
-                fig2.add_trace(
-                    go.Scatter(
-                        x=x_range_for_pdf,
-                        y=positive_pdf,
-                        mode="lines",
-                        name="Positives",
-                        line_color=POSITIVE,
-                    ),
-                    row=1,
-                    col=1,
-                    secondary_y=True,
-                )
-
-        # Negative Trace
-        if negative_data.size > 0:
-            if "rug" in neg_chart_types:
-                fig2.add_trace(
-                    go.Box(
-                        x=column_data["negative"]["data"],
-                        marker_symbol="line-ns-open",
-                        marker_color=NEGATIVE,
-                        boxpoints="all",
-                        jitter=1,
-                        fillcolor="rgba(255,255,255,0)",
-                        line_color="rgba(255,255,255,0)",
-                        hoveron="points",
-                        showlegend=False,
-                        name="Negatives Rug",
-                    ),
-                    row=2,
-                    col=1,
-                )
-
-            if "hist" in neg_chart_types:
-                fig2.add_trace(
-                    go.Bar(
-                        x=negative_bar_center,
-                        y=negative_hist,
-                        name="Negatives",
-                        marker_color=NEGATIVE,
-                        width=negative_bar_widths,
-                    ),
-                    row=1,
-                    col=1,
-                    secondary_y=True,
-                )
-
-            if "stat" in neg_chart_types and neg_fit_dist != "none":
-                neg_params = parameter_data["negative"][neg_fit_dist]
-                negative_dist = getattr(stats, neg_fit_dist)
-                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
-                negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
-                fig2.add_trace(
-                    go.Scatter(
-                        x=x_range_for_pdf,
-                        y=negative_pdf,
-                        mode="lines",
-                        name="Negatives",
-                        line_color=NEGATIVE,
-                    ),
-                    row=1,
-                    col=1,
-                    secondary_y=True,
-                )
 
         # Unknown Trace
         if unknown_data.size > 0:
@@ -831,11 +709,115 @@ def update_graph(
                     secondary_y=False,
                 )
 
+        # Positive Trace
+        if positive_data.size > 0:
+            if "rug" in pos_chart_types:
+                fig2.add_trace(
+                    go.Box(
+                        x=column_data["positive"]["data"],
+                        marker_symbol="line-ns-open",
+                        marker_color=POSITIVE,
+                        boxpoints="all",
+                        jitter=1,
+                        fillcolor="rgba(255,255,255,0)",
+                        line_color="rgba(255,255,255,0)",
+                        hoveron="points",
+                        showlegend=False,
+                        name="Positives Rug",
+                    ),
+                    row=2,
+                    col=1,
+                )
+
+            if "hist" in pos_chart_types:
+                fig2.add_trace(
+                    go.Bar(
+                        x=positive_bar_center,
+                        y=positive_hist,
+                        name="Positives",
+                        marker_color=POSITIVE,
+                        width=positive_bar_widths,
+                    ),
+                    row=1,
+                    col=1,
+                    secondary_y=False,
+                )
+
+            if "stat" in pos_chart_types and pos_fit_dist != "none":
+                pos_params = parameter_data["positive"][pos_fit_dist]
+                positive_dist = getattr(stats, pos_fit_dist)
+                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
+                positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
+                fig2.add_trace(
+                    go.Scatter(
+                        x=x_range_for_pdf,
+                        y=positive_pdf,
+                        mode="lines",
+                        name="Positives",
+                        line_color=POSITIVE,
+                    ),
+                    row=1,
+                    col=1,
+                    secondary_y=True,
+                )
+
+        # Negative Trace
+        if negative_data.size > 0:
+            if "rug" in neg_chart_types:
+                fig2.add_trace(
+                    go.Box(
+                        x=column_data["negative"]["data"],
+                        marker_symbol="line-ns-open",
+                        marker_color=NEGATIVE,
+                        boxpoints="all",
+                        jitter=1,
+                        fillcolor="rgba(255,255,255,0)",
+                        line_color="rgba(255,255,255,0)",
+                        hoveron="points",
+                        showlegend=False,
+                        name="Negatives Rug",
+                    ),
+                    row=2,
+                    col=1,
+                )
+
+            if "hist" in neg_chart_types:
+                fig2.add_trace(
+                    go.Bar(
+                        x=negative_bar_center,
+                        y=negative_hist,
+                        name="Negatives",
+                        marker_color=NEGATIVE,
+                        width=negative_bar_widths,
+                    ),
+                    row=1,
+                    col=1,
+                    secondary_y=False,
+                )
+
+            if "stat" in neg_chart_types and neg_fit_dist != "none":
+                neg_params = parameter_data["negative"][neg_fit_dist]
+                negative_dist = getattr(stats, neg_fit_dist)
+                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
+                negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
+                fig2.add_trace(
+                    go.Scatter(
+                        x=x_range_for_pdf,
+                        y=negative_pdf,
+                        mode="lines",
+                        name="Negatives",
+                        line_color=NEGATIVE,
+                    ),
+                    row=1,
+                    col=1,
+                    secondary_y=True,
+                )
+
         fig2.add_vline(
             x=pos_x,
             line_width=3,
             line_dash="dashdot",
-            line_color="orange",
+            line_color=THRESHOLD,
             annotation_text=pos_x,
             annotation_position="top right",
             annotation_font=dict(size=18),
@@ -846,8 +828,14 @@ def update_graph(
 
         fig2.update_yaxes(showticklabels=False, row=2, col=1)
         fig2.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
-        fig2.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
-        fig2.update_layout(margin=dict(l=20, r=20, t=0, b=0), showlegend=False)
+        fig2.update_layout(
+            margin=dict(l=20, r=20, t=0, b=0),
+            xaxis=dict(fixedrange=True),
+            yaxis=dict(fixedrange=True),
+            showlegend=False,
+            dragmode=False,
+            barmode="overlay",
+        )
 
         return fig2
 

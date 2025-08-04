@@ -151,7 +151,14 @@ threshold_slider = html.Div(
                         min=0,
                         max=100,
                         value=0,
-                        tooltip={"placement": "top", "always_visible": True},
+                        tooltip={
+                            "placement": "top",
+                            "always_visible": True,
+                            "style": {
+                                "margin-top": "0px",
+                                "margin-bottom": "-5px",
+                            },
+                        },
                     ),
                     width=True,
                 ),
@@ -270,6 +277,7 @@ layout = dbc.Container(
                                     "width": "100%",
                                     "height": "525px",
                                 },  # Set a fixed height or make it responsive
+                                config={"doubleClick": False, "displayModeBar": False},
                             )
                         ),
                         dbc.Row(
@@ -288,7 +296,12 @@ layout = dbc.Container(
                                     label="ROC Curve",
                                     children=[
                                         dcc.Graph(
-                                            id="roc_plot", style={"height": "525px"}
+                                            id="roc_plot",
+                                            style={"height": "525px"},
+                                            config={
+                                                "doubleClick": False,
+                                                "displayModeBar": False,
+                                            },
                                         )  # Set height for plot
                                     ],
                                 ),
@@ -304,11 +317,14 @@ layout = dbc.Container(
                                 dbc.Tab(
                                     label="Raw Data",
                                     children=[
-                                        dag.AgGrid(  # Correctly use dag.AgGrid
+                                        # TODO: dynamically size header minWidth
+                                        dag.AgGrid(
                                             id="ag-grid",
+                                            className="ag-theme-balham",
                                             columnDefs=[],
                                             rowData=[],
-                                            columnSize="sizeToFit",
+                                            columnSize="responsiveSizeToFit",
+                                            columnSizeOptions={"skipHeader": False},
                                             defaultColDef={
                                                 "resizable": True,
                                                 "sortable": True,
@@ -328,11 +344,6 @@ layout = dbc.Container(
                 ),  # Adjust width, add some padding and border
             ],
             class_name="mb-3",
-        ),  # Add margin-bottom to the middle row
-        #### dcc.Store Debugger ####
-        # html.Div(id="output-data", class_name="mt-3"),  # Component to display the data
-        # html.Div(id="output-params", class_name="mt-3"),  # Component to display the data
-        # html.Div(id="output-roc", class_name="mt-3"),
-        # html.Div(id="output-raw", class_name="mt-3"),
+        ),
     ],
 )
