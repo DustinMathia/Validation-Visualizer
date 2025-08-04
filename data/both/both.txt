@@ -1,0 +1,48 @@
+Gene	reference_result	STAMP z-score	Tumor %	Path Diagnosis
+ERBB2	1	244.026	10	Mets colorectal carcinoma
+ERBB2	1	11.759	60	Endometrial adenocarcinoma
+ERBB2	1	109.869	10	Mets adenocarcinoma
+ERBB2	1	24.478	40	Esophageal adenocarcinoma
+ERBB2	1	8.782	20	"Mets adenocarcinoma, ascitic fluid"
+ERBB2	1	76.567	20	poorly differentiated carcinoma with squamous features
+ERBB2	1	111.3	70	Adenocarcinoma
+ERBB2	1	104.478	20	Esophageal SCC
+ERBB2	1	8.143	50	"Metastatic adenocarcinoma, consistent with colorectal primary"
+ERBB2	1	1.379	40	Uterine serous carcinoma
+ERBB2	1	1.444	70	Signet ring cell carcinoma
+ERBB2	-1	-6.884	80	?Melanoma
+ERBB2	-1	1.917	70	metastatic carcinosarcoma
+ERBB2	-1	3.806	20	rectal adenocarcinoma
+ERBB2	-1	4.068	40	esophageal adenocarcinoma
+ERBB2	-1	3.18	35	Lung adenocarcinoma
+ERBB2	-1	1.992	50	poorly differentiated carcinoma
+ERBB2	-1	3.114	80	esophageal adenocarcinoma
+ERBB2	-1	-1.306	80	uterine serous carcinoma
+ERBB2	-1	1.852	30	mets gastric adenocarcinoma
+ERBB2	-1	2.361	10	signet ring cell adenocarcinoma
+ERBB2	-1	2.216	90	mets lung adenocarcinoma
+ERBB2	-1	-4.696	50	Serous carcinoma
+ERBB2	-1	-3.475	15	Vulval carcinoma
+ERBB2	-1	1.88	20	Esophageal SCC
+ERBB2	-1	0.636	30	pancreatic adenocarcinoma
+MDM2	1	37.852	85	Leimyosarcoma
+MDM2	1	77.711	80	dedifferentiated liposarcoma
+MDM2	1	174.656	80	Dedifferentiated liposarcoma
+MDM2	1	570.442	80	dedifferentiated liposarcoma
+MDM2	1	276.663	70	dedifferentiated liposarcoma
+MDM2	1	70.227	70	dedifferentiated liposarcoma
+MDM2	1	153.701	90	dedifferentiated liposarcoma
+MDM2	1	104.002	30	Pleomorphic sarcoma with MDM2 over expression
+MDM2	1	93.343	70	High grade malignant neoplasm
+MDM2	1	98.631	80	dedifferentiated liposarcoma
+MDM2	-1	0.967	60	clear cell stromal tumor of the lung 
+MDM2	-1	2.018	90	Pleomorphic and myxoid sarcoma with lipomatous differentiation
+MDM2	-1	-1.878	80	Dedifferentiated melanoma
+MDM2	-1	2.918	80	Undifferentiated malignant neoplasm
+MDM2	-1	-1.233	90	Malignant neoplasm with smooth muscle differentiation
+MDM2	-1	12.101	90	High grade sarcoma with osteoblastic differentiation
+MDM2	-1	1.617	60	HG pleomorphic sarcoma
+MDM2	-1	0.425	75	Low grade spindle cell neoplasm
+MDM2	-1	1.457	50	malignant solitary fibrous tumor
+MDM2	-1	2.384	70	Well-differentiated lipomatous tumor
+MDM2	-1	0.121	80	Atypical histiocytic proliferation
