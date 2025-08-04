@@ -97,7 +97,7 @@ app.layout = html.Div(
         alert_warning,
         dash.page_container,
         dcc.Store(id="uploaded-files-list", data=[], storage_type="session"),
-        dcc.Store(id="raw-file", data={}, storage_type="session"),
+        dcc.Store(id="raw-data-for-grid", data={}, storage_type="session"),
         dcc.Store(id="manipulated-data", data={}, storage_type="session"),
         dcc.Store(id="fit-params", data={}, storage_type="session"),
         dcc.Store(id="roc-curves", data={}, storage_type="session"),
@@ -112,7 +112,7 @@ app.layout = html.Div(
     Output("manipulated-data", "data", allow_duplicate=True),
     Output("fit-params", "data", allow_duplicate=True),
     Output("roc-curves", "data", allow_duplicate=True),
-    Output("raw-file", "data", allow_duplicate=True),
+    Output("raw-data-for-grid", "data", allow_duplicate=True),
     Output("alert-fail", "children"),
     Output("alert-fail", "is_open"),
     Input("upload-data", "contents"),
@@ -120,7 +120,7 @@ app.layout = html.Div(
     State("manipulated-data", "data"),
     State("fit-params", "data"),
     State("roc-curves", "data"),
-    State("raw-file", "data"),
+    State("raw-data-for-grid", "data"),
     prevent_initial_call=True,
 )
 def store_file(
@@ -131,7 +131,7 @@ def store_file(
     existing_roc_curves,
     existing_raw,
 ):
-    # Dictionary to store all file data
+    # Create dictionaries of all existing data in dcc.Stores
     all_files_data = (
         existing_manipulated_data if existing_manipulated_data is not None else {}
     )
@@ -140,6 +140,7 @@ def store_file(
     )
     all_files_roc = existing_roc_curves if existing_roc_curves is not None else {}
     all_files_raw = existing_raw if existing_raw is not None else {}
+
     if list_of_contents is not None:
         error_messages = []
         for content, filename in zip(list_of_contents, list_of_filenames):
@@ -356,7 +357,7 @@ def update_roc_plot_and_table(
 @app.callback(
     Output("ag-grid", "rowData"),
     Output("ag-grid", "columnDefs"),
-    Input("raw-file", "data"),
+    Input("raw-data-for-grid", "data"),
     Input("file-select", "label"),
 )
 def update_data_grid(raw_files, selected_file):
@@ -468,7 +469,7 @@ def update_unknown_buttons(b1, b2, b3, o1, o2, o3):
 # Callback to populate the file-select dropdown menu
 @app.callback(
     Output("file-select", "children"),
-    Input("raw-file", "data"),
+    Input("raw-data-for-grid", "data"),
 )
 def update_file_dropdown(raw_file_data):
     if not raw_file_data:
@@ -623,7 +624,7 @@ def update_graph(
     negative_data = np.array(col_data.get("negative", {}).get("data", []))
     unknown_data = np.array(col_data.get("unknown", {}).get("data", []))
 
-    fig2 = make_subplots(
+    fig = make_subplots(
         rows=2,
         cols=1,
         row_heights=[0.93, 0.07],
@@ -662,7 +663,7 @@ def update_graph(
         # Unknown Trace
         if unknown_data.size > 0:
             if "rug" in unknown_chart_types:
-                fig2.add_trace(
+                fig.add_trace(
                     go.Box(
                         x=column_data["unknown"]["data"],
                         marker_symbol="line-ns-open",
@@ -679,7 +680,7 @@ def update_graph(
                     col=1,
                 )
             if "hist" in unknown_chart_types:
-                fig2.add_trace(
+                fig.add_trace(
                     go.Bar(
                         x=unknown_bar_center,
                         y=unknown_hist,
@@ -696,7 +697,7 @@ def update_graph(
                 unknown_dist = getattr(stats, unknown_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
                 unknown_pdf = unknown_dist.pdf(x_range_for_pdf, **unknown_params)
-                fig2.add_trace(
+                fig.add_trace(
                     go.Scatter(
                         x=x_range_for_pdf,
                         y=unknown_pdf,
@@ -712,7 +713,7 @@ def update_graph(
         # Positive Trace
         if positive_data.size > 0:
             if "rug" in pos_chart_types:
-                fig2.add_trace(
+                fig.add_trace(
                     go.Box(
                         x=column_data["positive"]["data"],
                         marker_symbol="line-ns-open",
@@ -730,7 +731,7 @@ def update_graph(
                 )
 
             if "hist" in pos_chart_types:
-                fig2.add_trace(
+                fig.add_trace(
                     go.Bar(
                         x=positive_bar_center,
                         y=positive_hist,
@@ -748,7 +749,7 @@ def update_graph(
                 positive_dist = getattr(stats, pos_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
                 positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
-                fig2.add_trace(
+                fig.add_trace(
                     go.Scatter(
                         x=x_range_for_pdf,
                         y=positive_pdf,
@@ -764,7 +765,7 @@ def update_graph(
         # Negative Trace
         if negative_data.size > 0:
             if "rug" in neg_chart_types:
-                fig2.add_trace(
+                fig.add_trace(
                     go.Box(
                         x=column_data["negative"]["data"],
                         marker_symbol="line-ns-open",
@@ -782,7 +783,7 @@ def update_graph(
                 )
 
             if "hist" in neg_chart_types:
-                fig2.add_trace(
+                fig.add_trace(
                     go.Bar(
                         x=negative_bar_center,
                         y=negative_hist,
@@ -800,7 +801,7 @@ def update_graph(
                 negative_dist = getattr(stats, neg_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
                 negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
-                fig2.add_trace(
+                fig.add_trace(
                     go.Scatter(
                         x=x_range_for_pdf,
                         y=negative_pdf,
@@ -813,7 +814,7 @@ def update_graph(
                     secondary_y=True,
                 )
 
-        fig2.add_vline(
+        fig.add_vline(
             x=pos_x,
             line_width=3,
             line_dash="dashdot",
@@ -826,9 +827,9 @@ def update_graph(
             secondary_y=True,
         )
 
-        fig2.update_yaxes(showticklabels=False, row=2, col=1)
-        fig2.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
-        fig2.update_layout(
+        fig.update_yaxes(showticklabels=False, row=2, col=1)
+        fig.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
+        fig.update_layout(
             margin=dict(l=20, r=20, t=0, b=0),
             xaxis=dict(fixedrange=True),
             yaxis=dict(fixedrange=True),
@@ -837,7 +838,7 @@ def update_graph(
             barmode="overlay",
         )
 
-        return fig2
+        return fig
 
 
 if __name__ == "__main__":

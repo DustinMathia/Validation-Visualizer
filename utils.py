@@ -9,6 +9,7 @@ THRESHOLD = "#d47500"
 
 def manipulate_data(data_list, column_names):
     manipulated_data = {}
+    # TODO: add slider_values = {} for future slider-values
     col_dtypes = data_list.dtype.fields
     numeric_cols = [
         col_name
@@ -41,6 +42,7 @@ def manipulate_data(data_list, column_names):
         slider_value = range_min
 
         # Store data
+        # TODO: return extra dictionary for 'slider-values' with: range_value and slider_value
         manipulated_data[col] = {
             "positive": {"data": np.sort(positive_data_filtered)},
             "negative": {"data": np.sort(negative_data_filtered)},
@@ -50,7 +52,11 @@ def manipulate_data(data_list, column_names):
             "range_value": range_value,
             "slider_value": slider_value,
         }
-    return manipulated_data
+        # slider_values[col] = {
+        #   "range_value": range_value,
+        #   "slider_value": slider_value,
+        # }
+    return manipulated_data  #, slider_values
 
 
 def calculate_bin_edges(
@@ -374,18 +380,6 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
     acc_val = (
         round((tp_val + tn_val) / total_classified, 2) if total_classified > 0 else 0
     )
-
-    # tp_val = roc_data['TP'][i] if roc_data['TP'] else None
-    # fp_val = roc_data['FP'][i] if roc_data['FP'] else None
-    # tn_val = roc_data['TN'][i] if roc_data['TN'] else None
-    # fn_val = roc_data['FN'][i] if roc_data['FN'] else None
-    # up_val = roc_data['UP'][i] if roc_data['UP'] else None
-    # un_val = roc_data['UN'][i] if roc_data['UN'] else None
-    # tpr_val = round(roc_data['TPR'][i], 2) if roc_data['TPR'] and roc_data['TPR'][i] is not None else None
-    # fpr_val = round(roc_data['FPR'][i], 2) if roc_data['FPR'] and roc_data['FPR'][i] is not None else None
-    # tnr_val = round(roc_data['TNR'][i], 2) if roc_data['TNR'] and roc_data['TNR'][i] is not None else None
-    # fnr_val = round(roc_data['FNR'][i], 2) if roc_data['FNR'] and roc_data['FNR'][i] is not None else None
-    # acc_val = round(roc_data['ACC'][i], 2) if roc_data['ACC'] and roc_data['ACC'][i] is not None else None
 
     mean = norm_params["loc"]
     std = norm_params["scale"]
