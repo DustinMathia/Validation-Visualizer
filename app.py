@@ -1,5 +1,17 @@
 import dash
-from dash import Dash, html, callback, Input, Output, State, ctx, ALL, no_update, dcc
+from dash import (
+    Dash,
+    html,
+    callback,
+    Input,
+    Output,
+    State,
+    ctx,
+    ALL,
+    no_update,
+    dcc,
+    page_container,
+)
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
@@ -93,32 +105,16 @@ app = Dash(
         custom_css,
     ],
     use_pages=True,
-)
-
-app.layout = html.Div(
-    [
-        navbar,
-        alert_fail,
-        alert_warning,
-        dash.page_container,
-        dcc.Store(id="uploaded-files-list", data=[], storage_type="session"),
-        dcc.Store(id="processed-files-list", data=[], storage_type="session"),
-        dcc.Store(id="raw-data-for-grid", data={}, storage_type="session"),
-        dcc.Store(id="manipulated-data", data={}, storage_type="session"),
-        dcc.Store(id="fit-params", data={}, storage_type="session"),
-        dcc.Store(id="roc-curves", data={}, storage_type="session"),
-        dcc.Store(id="slider-values", data={}, storage_type="session"),
-        dcc.Store(id="active-file", data=None, storage_type="session"),
-    ]
+    suppress_callback_exceptions=True,
 )
 
 
 @callback(
     Output("uploaded-files-list", "data", allow_duplicate=True),
-    Output("alert-fail", "is_open"),
-    Output("alert-fail", "children"),
-    Output("alert-warning", "is_open"),
-    Output("alert-warning", "children"),
+    Output("alert-fail", "is_open", allow_duplicate=True),
+    Output("alert-fail", "children", allow_duplicate=True),
+    Output("alert-warning", "is_open", allow_duplicate=True),
+    Output("alert-warning", "children", allow_duplicate=True),
     Input("upload-data", "contents"),
     State("upload-data", "filename"),
     State("uploaded-files-list", "data"),
@@ -126,12 +122,11 @@ app.layout = html.Div(
 )
 # Checks if files are valid then stores them in /data/filename/
 def store_files(upload_contents, upload_filenames, uploaded_files_list):
-    all_uploaded_files_list = uploaded_files_list if not None else []
+    all_uploaded_files_list = uploaded_files_list if uploaded_files_list else []
+    errors = []
+    warnings = []
 
     if upload_filenames is not None:
-        errors = []
-        warnings = []
-
         for content, filename in zip(upload_contents, upload_filenames):
             content_type, content_string = content.split(",")
             try:
@@ -140,9 +135,9 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
                 errors.append(f"Error decoding Base64 string of file {filename}: {e}")
 
             try:
-                if filename.endswith("xlsx"):
+                if filename.endswith(".xlsx"):
                     df_file = pd.read_excel(io.BytesIO(decoded))
-                elif filename.endswith("txt"):
+                elif filename.endswith(".txt"):
                     df_file = pd.read_csv(
                         io.StringIO(decoded.decode("utf-8")), sep="\t"
                     )
@@ -156,9 +151,13 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
                 if "reference_result" not in df_file.columns:
                     warnings.append(f"No Column 'reference_result' in {filename}")
                 else:
-                    if not df_file["reference_result"].isin({-1, 0, 1}).all():
+                    if (
+                        not df_file["reference_result"]
+                        .isin({float(-1), float(0), float(1), np.nan})
+                        .all()
+                    ):
                         errors.append(
-                            f"Error: The column 'reference_result' in file {filename} has incorrect values, must be -1, 0, or 1."
+                            f"Error: The column 'reference_result' in file {filename} has incorrect values, must be -1, 0, 1, or be empty."
                         )
 
             except pd.errors.EmptyDataError:
@@ -167,8 +166,8 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
                 errors.append(f"An unexpected Error occured: {e}")
 
             # If no errors, file is acceptable and save to /data/filename/
+            file_dir = os.path.join("data", filename)
             if not errors:
-                file_dir = os.path.join("data", os.path.splitext(filename)[0])
                 os.makedirs(file_dir, exist_ok=True)
                 output_filepath = os.path.join(file_dir, filename)
 
@@ -180,6 +179,7 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
                     errors.append(f"Error saving file {filename}: {e}")
             else:
                 # delete file
+                all_uploaded_files_list.remove(filename)
                 if os.path.exists(file_dir):
                     try:
                         shutil.rmtree(file_dir)
@@ -191,6 +191,7 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
     warning_is_open = len(warnings) > 0
     fail_children = html.Ul([html.Li(msg) for msg in errors]) if errors else ""
     warning_children = html.Ul([html.Li(msg) for msg in warnings]) if warnings else ""
+    errors = []
 
     return (
         all_uploaded_files_list,
@@ -201,239 +202,211 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
     )
 
 
-# @callback(
-#         Input("uploaded-files-list", "data"),
-#         Output("processed-files-list", "data"),
-# )
-# def data_processing():
-#     return None
-
-
-# @callback(
-#     Input("file-select", "value"),
-#     Output( alll teh dcc stores needed)
-# )
-# def load_analysis_data():
-#     return all teh dccs
-
-
-# # Store data ready to graph
-# @callback(
-#     Output("manipulated-data", "data", allow_duplicate=True),
-#     Output("fit-params", "data", allow_duplicate=True),
-#     Output("roc-curves", "data", allow_duplicate=True),
-#     Output("raw-data-for-grid", "data", allow_duplicate=True),
-#     Output("alert-fail", "children"),
-#     Output("alert-fail", "is_open"),
-#     Input("upload-data", "contents"),
-#     State("upload-data", "filename"),
-#     State("manipulated-data", "data"),
-#     State("fit-params", "data"),
-#     State("roc-curves", "data"),
-#     State("raw-data-for-grid", "data"),
-#     prevent_initial_call=True,
-# )
-# def store_file(
-#     list_of_contents,
-#     list_of_filenames,
-#     existing_manipulated_data,
-#     existing_fitted_params,
-#     existing_roc_curves,
-#     existing_raw,
-# ):
-#     # Create dictionaries of all existing data in dcc.Stores
-#     all_files_data = (
-#         existing_manipulated_data if existing_manipulated_data is not None else {}
-#     )
-#     all_files_fit_params = (
-#         existing_fitted_params if existing_fitted_params is not None else {}
-#     )
-#     all_files_roc = existing_roc_curves if existing_roc_curves is not None else {}
-#     all_files_raw = existing_raw if existing_raw is not None else {}
-#
-#     if list_of_contents is not None:
-#         error_messages = []
-#         for content, filename in zip(list_of_contents, list_of_filenames):
-#             if isinstance(content, str):  # Check if content is a string
-#                 content_type, content_string = content.split(",")
-#                 decoded = base64.b64decode(content_string)
-#
-#                 try:
-#                     # Read header to get column names
-#                     with io.StringIO(decoded.decode("utf-8")) as f:
-#                         header = f.readline().strip().split("\t")
-#
-#                     # Load data with skip_header and names
-#                     data = np.genfromtxt(
-#                         io.BytesIO(decoded),
-#                         delimiter="\t",
-#                         dtype=None,
-#                         encoding="utf-8",
-#                         skip_header=1,
-#                         names=header,
-#                         missing_values="",
-#                         filling_values=0,
-#                     )
-#
-#                     # Manipulate data
-#                     manipulated_data = utils.manipulate_data(data, header)
-#
-#                     # make roc curve
-#                     roc_columns = {}
-#                     for column in manipulated_data:
-#                         roc_columns[column] = utils.make_roc_curve(
-#                             manipulated_data[column]["positive"]["data"],
-#                             manipulated_data[column]["negative"]["data"],
-#                             manipulated_data[column]["unknown"]["data"],
-#                         )
-#
-#                     fitted_data = utils.fit_params(manipulated_data)
-#
-#                     # Convert NumPy structured array to list of dictionaries for ag-grid
-#                     data_list_for_grid = []
-#                     for row in data:
-#                         data_list_for_grid.append(dict(zip(header, row)))
-#
-#                     all_files_data[filename] = manipulated_data
-#                     all_files_fit_params[filename] = fitted_data
-#                     all_files_roc[filename] = roc_columns
-#                     all_files_raw[filename] = {
-#                         "header": header,
-#                         "data": data_list_for_grid,
-#                     }  # Store processed data for ag-grid
-#
-#                 except Exception as e:
-#                     error_messages.append(f"Error processing file '{filename}': {e}")
-#                     # Do not return None here, just append error and continue to process other files
-#             else:
-#                 error_messages.append(f"Invalid content type for file '{filename}'.")
-#
-#         if error_messages:
-#             return (
-#                 all_files_data,
-#                 all_files_fit_params,
-#                 all_files_roc,
-#                 all_files_raw,
-#                 html.Div(error_messages, style={"color": "red"}),
-#                 True,
-#             )
-#         else:
-#             return (
-#                 all_files_data,
-#                 all_files_fit_params,
-#                 all_files_roc,
-#                 all_files_raw,
-#                 html.Div("", style={"color": "green"}),
-#                 False,
-#             )
-#     # If list_of_contents is None (e.g., initial load if not prevented, or no files selected)
-#     return (
-#         all_files_data,
-#         all_files_fit_params,
-#         all_files_roc,
-#         all_files_raw,
-#         html.Div("No File Uploaded", style={"color": "green"}),
-#         False,
-#     )
-
-
-# Update Stored Data
-@app.callback(
-    Output("manipulated-data", "data", allow_duplicate=True),
-    Input("slider-position", "value"),
-    Input("range-slider", "value"),
-    State("manipulated-data", "data"),
-    State("file-select", "label"),
-    State("column-select", "label"),
-    prevent_initial_call=True,  # Prevent the callback from firing on initial load
-)
-def update_manipulated_data(
-    slider_position,
-    range_slider_value,
-    manipulated_data,
-    selected_file,
-    selected_column,
-):
-    if manipulated_data and selected_file and selected_column:
-        column_data = manipulated_data[selected_file][selected_column]
-        column_data["slider_value"] = slider_position
-        column_data["range_value"] = range_slider_value
-        # Update stored data
-        manipulated_data[selected_file].update({selected_column: column_data})
-        return manipulated_data
-    else:
-        return manipulated_data
-
-
-# Callback for range slider updates
 @callback(
+    Output("processed-files-list", "data", allow_duplicate=True),
+    Output("labeled-data", "data", allow_duplicate=True),
+    Output("roc-curves", "data", allow_duplicate=True),
+    Output("fit-params", "data", allow_duplicate=True),
+    Output("raw-data-for-grid", "data", allow_duplicate=True),
+    Output("alert-fail", "is_open", allow_duplicate=True),
+    Output("alert-fail", "children", allow_duplicate=True),
+    Input("uploaded-files-list", "data"),
+    State("processed-files-list", "data"),
+    prevent_initial_call=True,
+)
+def data_processing(uploaded_files_list, processed_files_list):
+    errors = []
+    if not uploaded_files_list:
+        return (
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+        )
+
+    new_labeled_data = {}
+    new_roc_curves = {}
+    new_fit_params = {}
+    new_raw_data_for_grid = {}
+    last_processed_file = None
+
+    finished_processed_files_list = processed_files_list if processed_files_list else []
+
+    for filename in uploaded_files_list:
+        if filename not in finished_processed_files_list:
+            try:
+                file_dir = os.path.join("data", filename)
+                raw_file_path = os.path.join(file_dir, filename)
+
+                if filename.endswith(".xlsx"):
+                    df = pd.read_excel(raw_file_path)
+                elif filename.endswith(".txt"):
+                    df = pd.read_csv(raw_file_path, sep="\t")
+
+                labeled_data = utils.label_data(df)
+                roc_curves = utils.make_roc_curve(labeled_data)
+                fitted_params = utils.fit_params(labeled_data)
+
+                labeled_data_filepath = os.path.join(file_dir, "labeled_data.pkl")
+                with open(labeled_data_filepath, "wb") as f:
+                    pickle.dump(labeled_data, f)
+                roc_curves_filepath = os.path.join(file_dir, "roc_curves.pkl")
+                with open(roc_curves_filepath, "wb") as f:
+                    pickle.dump(roc_curves, f)
+                fitted_params_filepath = os.path.join(file_dir, "fitted_params.pkl")
+                with open(fitted_params_filepath, "wb") as f:
+                    pickle.dump(fitted_params, f)
+
+                raw_grid_filepath = os.path.join(file_dir, "raw_data.feather")
+                df.to_feather(raw_grid_filepath)
+
+                new_labeled_data[filename] = labeled_data
+                new_roc_curves[filename] = roc_curves
+                new_fit_params[filename] = fitted_params
+                new_raw_data_for_grid[filename] = df.to_dict("records")
+
+                finished_processed_files_list.append(filename)
+                last_processed_file = filename
+
+            except Exception as e:
+                errors.append(f"Error processing file {filename}: {e}")
+
+    # Logic for alerts
+    fail_is_open = len(errors) > 0
+    fail_children = html.Ul([html.Li(msg) for msg in errors]) if errors else ""
+    errors = []
+
+    if last_processed_file:
+        return (
+            finished_processed_files_list,
+            new_labeled_data.get(last_processed_file, {}),
+            new_roc_curves.get(last_processed_file, {}),
+            new_fit_params.get(last_processed_file, {}),
+            new_raw_data_for_grid.get(last_processed_file, {}),
+            fail_is_open,
+            fail_children,
+        )
+
+    return (
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        fail_is_open,
+        fail_children,
+    )
+
+
+@app.callback(
+    Output("labeled-data", "data"),
+    Output("fit-params", "data"),
+    Output("roc-curves", "data"),
+    Output("raw-data-for-grid", "data"),
+    Input("file-select", "value"),
+    prevent_initial_call=True,
+)
+def load_data_into_stores(file_select_value):
+    if file_select_value is None:
+        return no_update, no_update, no_update, no_update
+
+    file_dir = os.path.join("data", file_select_value)
+
+    # Load labeled data from pickle
+    labeled_data_path = os.path.join(file_dir, "labeled_data.pkl")
+    with open(labeled_data_path, "rb") as f:
+        labeled_data = pickle.load(f)
+
+    # Load fitted params from pickle
+    fit_params_path = os.path.join(file_dir, "fitted_params.pkl")
+    with open(fit_params_path, "rb") as f:
+        fit_params = pickle.load(f)
+
+    # Load ROC curve data from pickle
+    roc_curves_path = os.path.join(file_dir, "roc_curves.pkl")
+    with open(roc_curves_path, "rb") as f:
+        roc_curves = pickle.load(f)
+
+    # Load raw data from feather and convert to dict for AG Grid
+    raw_data_path = os.path.join(file_dir, "raw_data.feather")
+    raw_data_df = pd.read_feather(raw_data_path)
+    raw_data_for_grid = raw_data_df.to_dict("records")
+
+    return labeled_data, fit_params, roc_curves, raw_data_for_grid
+
+
+# Sliders #
+
+
+@callback(
+    Output("range-value", "data"),
+    Output("range-slider", "value"),
     Output("range-slider", "min"),
     Output("range-slider", "max"),
-    Output("range-slider", "value"),
-    Input("column-select", "label"),
+    Input("column-select", "value"),
     Input("range-reset", "n_clicks"),
-    State("manipulated-data", "data"),
-    State("file-select", "label"),
+    State("range-slider", "value"),
+    State("labeled-data", "data"),
+    prevent_initial_call=False,
 )
-def update_range_slider_range(selected_column, button, manipulated_data, selected_file):
-    if manipulated_data and selected_column in manipulated_data.get(selected_file, {}):
-        column_data = manipulated_data[selected_file][selected_column]
+def reset_range_slider(selected_column, n_clicks, rangeslider_value, labeled_data):
+    if not selected_column:
+        raise dash.exceptions.PreventUpdate
 
-        range_min = column_data["range_min"]
-        range_max = column_data["range_max"]
+    range_min = labeled_data.get(selected_column, {}).get("range_min", 0)
+    range_max = labeled_data.get(selected_column, {}).get("range_max", 0)
 
-        initial_range = column_data.get("range_value", [range_min, range_max])
+    rangeslider_value = [range_min, range_max]
 
-        if "range-reset" == ctx.triggered_id:
-            initial_range = [range_min, range_max]
-
-        return range_min, range_max, initial_range  # Return updated stored data
-    else:
-        return 0, 100, [0, 100]  # Return default values if data is not available
+    return rangeslider_value, rangeslider_value, range_min, range_max
 
 
-# Callback for slider updates
 @callback(
+    Output("slider-value", "data"),
+    Output("slider-position", "value"),
     Output("slider-position", "min"),
     Output("slider-position", "max"),
     Input("range-slider", "value"),
+    State("slider-position", "value"),
+    prevent_initial_call=False,
 )
-def update_slider_range(selected_range):
-    slider_min = selected_range[0]
-    slider_max = selected_range[1]
-    return slider_min, slider_max
+def update_threshold_slider(rangeslider_value, slider_value):
+    # If the current value is outside the new range, reset it to the new min
+    if slider_value <= rangeslider_value[0]:
+        slider_value = rangeslider_value[0]
+    if slider_value >= rangeslider_value[1]:
+        slider_value = rangeslider_value[1]
+
+    return slider_value, slider_value, rangeslider_value[0], rangeslider_value[1]
 
 
-# roc figures
+# roc figures #
+
+
 @app.callback(
     Output("roc_plot", "figure"),
     Output("roc_table", "figure"),
-    Input("manipulated-data", "data"),
-    Input("fit-params", "data"),
-    Input("roc-curves", "data"),
-    Input("file-select", "label"),
-    Input("column-select", "label"),
-    State("slider-position", "value"),
+    Input("column-select", "value"),
+    Input("slider-position", "value"),
+    State("fit-params", "data"),
+    State("roc-curves", "data"),
+    prevent_inital_call=False,
 )
-def update_roc_plot_and_table(
-    manipulated_data, fitted_params, roc_data, selected_file, selected_column, pos_x
-):
-    # Only check for fundamental data needed for any graph
-    if not (
-        manipulated_data and selected_file and selected_column
-    ):  # and fitted_params and roc_data:
-        # Return empty figures and default slider values
+def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves):
+    if not roc_curves or not selected_column:
         return go.Figure(), go.Figure()
 
-    parameter_data = fitted_params.get(selected_file, {}).get(selected_column)
-    roc_column = roc_data.get(selected_file, {}).get(selected_column)
+    roc_column = roc_curves.get(selected_column)
 
     # Check if roc_column and its population_data are available and not empty
     if not roc_column or not roc_column.get("population_data"):
         return go.Figure(), go.Figure()
     else:
         roc_table, roc_table_header, roc_index = utils.gen_roc_table(
-            roc_column, pos_x, parameter_data["positive"]["norm"]
+            roc_column, pos_x, fitted_params[selected_column]["positive"]["norm"]
         )
         roc_fig = utils.plot_roc_curve(roc_column, roc_index)
         roc_table = go.Figure(
@@ -463,27 +436,32 @@ def update_roc_plot_and_table(
     return roc_fig, roc_table
 
 
-# data ag grid
+# data ag grid #
+
+
 @app.callback(
     Output("ag-grid", "rowData"),
     Output("ag-grid", "columnDefs"),
     Input("raw-data-for-grid", "data"),
-    Input("file-select", "label"),
+    Input("file-select", "value"),
+    prevent_inital_call=True,
 )
-def update_data_grid(raw_files, selected_file):
+def update_data_grid(raw_data_for_grid, selected_file):
     # Ensure raw_files is a dictionary, even if it starts as None
-    raw_files = raw_files if raw_files is not None else {}
+    raw_data_for_grid = (
+        raw_data_for_grid if raw_data_for_grid is not None else pd.DataFrame()
+    )
 
-    if raw_files and selected_file and selected_file in raw_files:
-        file_data = raw_files[selected_file]
-        header = file_data["header"]
-        data = file_data["data"]  # This is already a list of dictionaries
+    if raw_data_for_grid and selected_file:
+        row_Data = raw_data_for_grid
+        column_names = list(raw_data_for_grid[0].keys())
+        column_Defs = [{"field": i} for i in column_names]
 
-        # Create column definitions for AgGrid
-        column_defs = [{"field": col} for col in header]
-
-        return data, column_defs
+        return row_Data, column_Defs
     return [], []  # Return empty lists if no data or file selected
+
+
+# buttons #
 
 
 @app.callback(
@@ -576,87 +554,50 @@ def update_unknown_buttons(b1, b2, b3, o1, o2, o3):
     return new_o1, new_o2, new_o3
 
 
-# Callback to populate the file-select dropdown menu
+# dropdowns #
+
+
 @app.callback(
-    Output("file-select", "children"),
-    Input("raw-data-for-grid", "data"),
+    Output("file-select", "options"),
+    Output("file-select", "value"),
+    Input("processed-files-list", "data"),
+    prevent_initial_call=False,
 )
-def update_file_dropdown(raw_file_data):
-    if not raw_file_data:
-        return []
+def update_file_dropdown(processed_files_list):  # , current_page):
+    if not processed_files_list:
+        return [], None
 
-    dropdown_items = []
-    for filename in raw_file_data.keys():
-        dropdown_items.append(
-            dbc.DropdownMenuItem(filename, id={"type": "file-item", "index": filename})
-        )
+    options = [
+        {"label": filename, "value": filename} for filename in processed_files_list
+    ]
+    default_value = processed_files_list[-1]
 
-    return dropdown_items
+    return options, default_value
 
 
-# Callback to populate the column-select dropdown menu
 @app.callback(
-    Output("column-select", "children"),
-    Input("manipulated-data", "data"),
-    Input("file-select", "label"),
+    Output("column-select", "options"),
+    Output("column-select", "value"),
+    Input("labeled-data", "data"),
+    prevent_initial_call=True,
 )
-def update_column_dropdown(manipulated_data, filename):
-    # Ensure manipulated_data is a non-empty dictionary and a filename is selected
-    if not isinstance(manipulated_data, dict) or not manipulated_data or not filename:
-        return []
+def update_column_dropdown(labeled_data):
+    if not labeled_data:
+        return [], None
 
-    # Check if the selected file exists in the stored data
-    if filename not in manipulated_data:
-        return []
+    column_names = list(labeled_data.keys())
+    options = [{"label": column, "value": column} for column in column_names]
+    default_value = column_names[0] if column_names else None
 
-    # Get column names from the keys of the dictionary for the selected file
-    columns = list(manipulated_data[filename].keys())
-
-    dropdown_items = []
-    for col in columns:
-        dropdown_items.append(
-            dbc.DropdownMenuItem(col, id={"type": "column-item", "index": col})
-        )
-
-    return dropdown_items
+    return options, default_value
 
 
-# Callback to capture file selection and update the label
-@app.callback(
-    Output("file-select", "label"),
-    Input({"type": "file-item", "index": ALL}, "n_clicks"),
-    State({"type": "file-item", "index": ALL}, "id"),
-)
-def select_file(n_clicks, item_ids):
-    if not any(n_clicks):
-        return no_update
-
-    button_id = ctx.triggered_id
-    return button_id["index"]
-
-
-# Callback to capture column selection and update the label
-@app.callback(
-    Output("column-select", "label"),
-    Input({"type": "column-item", "index": ALL}, "n_clicks"),
-    State({"type": "column-item", "index": ALL}, "id"),
-)
-def select_column(n_clicks, item_ids):
-    if not any(n_clicks):
-        return no_update
-
-    button_id = ctx.triggered_id
-    return button_id["index"]
+# main graph #
 
 
 @app.callback(
     Output("graph", "figure"),
     [
-        Input("manipulated-data", "data"),
-        Input("fit-params", "data"),
-        Input("roc-curves", "data"),
-        Input("file-select", "label"),
-        Input("column-select", "label"),
         Input("pos-statfit-select", "value"),
         Input("neg-statfit-select", "value"),
         Input("unknown-statfit-select", "value"),
@@ -669,17 +610,16 @@ def select_column(n_clicks, item_ids):
         Input("unk-btn-1", "outline"),
         Input("unk-btn-2", "outline"),
         Input("unk-btn-3", "outline"),
-        State("slider-position", "value"),
+        Input("slider-position", "value"),
         Input("range-slider", "value"),
+        State("labeled-data", "data"),
+        State("fit-params", "data"),
+        State("roc-curves", "data"),
+        State("column-select", "value"),
     ],
     prevent_initial_call=True,
 )
 def update_graph(
-    manipulated_data,
-    fitted_params,
-    roc_data,
-    selected_file,
-    selected_column,
     pos_fit_dist,
     neg_fit_dist,
     unknown_fit_dist,
@@ -692,10 +632,16 @@ def update_graph(
     unk_btn1_outline,
     unk_btn2_outline,
     unk_btn3_outline,
-    pos_x,
+    slider_value,
     range_value,
+    labeled_data,
+    fitted_params,
+    roc_data,
+    selected_column,
 ):
-    # Convert the button classes to a list of selected options for each group
+    if not labeled_data or not selected_column:
+        raise dash.exceptions.PreventUpdate
+
     pos_chart_types = []
     if not pos_btn1_outline:
         pos_chart_types.append("rug")
@@ -720,18 +666,19 @@ def update_graph(
     if not unk_btn3_outline:
         unknown_chart_types.append("stat")
 
-    # Only check for fundamental data needed for any graph
-    if not (manipulated_data and selected_file and selected_column):
-        return go.Figure()
+    column_data = labeled_data.get(selected_column)
+    parameter_data = fitted_params.get(selected_column)
 
-    column_data = manipulated_data.get(selected_file, {}).get(selected_column)
-    parameter_data = fitted_params.get(selected_file, {}).get(selected_column)
-    file_data = manipulated_data.get(selected_file, {})
-    col_data = file_data.get(selected_column, {})
+    if pos_fit_dist:
+        pos_params = parameter_data["positive"][pos_fit_dist]
+    if neg_fit_dist:
+        neg_params = parameter_data["negative"][neg_fit_dist]
+    if unknown_fit_dist:
+        unknown_params = parameter_data["unknown"][unknown_fit_dist]
 
-    positive_data = np.array(col_data.get("positive", {}).get("data", []))
-    negative_data = np.array(col_data.get("negative", {}).get("data", []))
-    unknown_data = np.array(col_data.get("unknown", {}).get("data", []))
+    positive_data = np.array(column_data.get("positive", {}).get("data", []))
+    negative_data = np.array(column_data.get("negative", {}).get("data", []))
+    unknown_data = np.array(column_data.get("unknown", {}).get("data", []))
 
     fig = make_subplots(
         rows=2,
@@ -801,7 +748,11 @@ def update_graph(
                     col=1,
                     secondary_y=False,
                 )
-            if "stat" in unknown_chart_types and unknown_fit_dist != "none":
+            if (
+                "stat" in unknown_chart_types
+                and unknown_fit_dist != "none"
+                and unknown_fit_dist
+            ):
                 unknown_params = parameter_data["unknown"][unknown_fit_dist]
                 unknown_dist = getattr(stats, unknown_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
@@ -853,7 +804,7 @@ def update_graph(
                     secondary_y=False,
                 )
 
-            if "stat" in pos_chart_types and pos_fit_dist != "none":
+            if "stat" in pos_chart_types and pos_fit_dist != "none" and pos_fit_dist:
                 pos_params = parameter_data["positive"][pos_fit_dist]
                 positive_dist = getattr(stats, pos_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
@@ -905,7 +856,7 @@ def update_graph(
                     secondary_y=False,
                 )
 
-            if "stat" in neg_chart_types and neg_fit_dist != "none":
+            if "stat" in neg_chart_types and neg_fit_dist != "none" and neg_fit_dist:
                 neg_params = parameter_data["negative"][neg_fit_dist]
                 negative_dist = getattr(stats, neg_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
@@ -923,21 +874,23 @@ def update_graph(
                     secondary_y=True,
                 )
 
-        fig.add_vline(
-            x=pos_x,
-            line_width=3,
-            line_dash="dashdot",
-            line_color=THRESHOLD,
-            annotation_text=pos_x,
-            annotation_position="top right",
-            annotation_font=dict(size=18),
-            row=1,
-            col=1,
-            secondary_y=True,
-        )
+        if slider_value is not None:
+            fig.add_vline(
+                x=slider_value,
+                line_width=3,
+                line_dash="dashdot",
+                line_color=THRESHOLD,
+                annotation_text=slider_value,
+                annotation_position="top right",
+                annotation_font=dict(size=18),
+                row=1,
+                col=1,
+                secondary_y=True,
+            )
 
         fig.update_yaxes(showticklabels=False, row=2, col=1)
         fig.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
+        fig.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
         fig.update_layout(
             margin=dict(l=20, r=20, t=0, b=0),
             xaxis=dict(fixedrange=True),
@@ -948,6 +901,32 @@ def update_graph(
         )
 
         return fig
+
+
+@callback(Output("current-page", "data"), Input("url", "pathname"))
+def update_current_page(pathname):
+    return pathname
+
+
+app.layout = html.Div(
+    [
+        dcc.Location(id="url", refresh=False),
+        dcc.Store(id="uploaded-files-list", data=[], storage_type="memory"),
+        dcc.Store(id="processed-files-list", data=[], storage_type="memory"),
+        dcc.Store(id="raw-data-for-grid", data={}, storage_type="memory"),
+        dcc.Store(id="labeled-data", data={}, storage_type="memory"),
+        dcc.Store(id="fit-params", data={}, storage_type="memory"),
+        dcc.Store(id="roc-curves", data={}, storage_type="memory"),
+        dcc.Store(id="slider-value", data=None, storage_type="memory"),
+        dcc.Store(id="range-value", data=[None, None], storage_type="memory"),
+        dcc.Store(id="active-file", data=None, storage_type="memory"),
+        dcc.Store(id="current-page"),
+        navbar,
+        alert_fail,
+        alert_warning,
+        dash.page_container,
+    ]
+)
 
 
 if __name__ == "__main__":

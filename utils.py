@@ -1,30 +1,30 @@
 import numpy as np
 from scipy import stats
 import plotly.graph_objects as go
+import pandas as pd
 import bisect
 import math
 
 THRESHOLD = "#d47500"
 
 
-def manipulate_data(data_list, column_names):
-    manipulated_data = {}
-    # TODO: add slider_values = {} for future slider-values
-    col_dtypes = data_list.dtype.fields
+def label_data(df):
+    labeled_data = {}
     numeric_cols = [
-        col_name
-        for col_name, col_type in col_dtypes.items()
-        if col_type[0] in (np.int_, np.float64) and col_name != "reference_result"
+        col
+        for col in df.columns
+        if pd.api.types.is_numeric_dtype(df[col]) and col != "reference_result"
     ]
 
     for col in numeric_cols:
         # Filter data based on reference_result
-        if "reference_result" in data_list.dtype.names:
-            positive_data_filtered = data_list[data_list["reference_result"] > 0][col]
-            negative_data_filtered = data_list[data_list["reference_result"] < 0][col]
-            unknown_data_filtered = data_list[data_list["reference_result"] == 0][col]
+        if "reference_result" in df.columns:
+            df["reference_result"] = df["reference_result"].fillna(0)
+            positive_data_filtered = df[df["reference_result"] > 0][col].to_numpy()
+            negative_data_filtered = df[df["reference_result"] < 0][col].to_numpy()
+            unknown_data_filtered = df[df["reference_result"] == 0][col].to_numpy()
         else:
-            unknown_data_filtered = data_list[col]
+            unknown_data_filtered = df[col].to_numpy()
             positive_data_filtered = np.array([])
             negative_data_filtered = np.array([])
 
@@ -38,25 +38,15 @@ def manipulate_data(data_list, column_names):
             range_min = 0
             range_max = 100  # Default range if no data
 
-        range_value = [range_min, range_max]
-        slider_value = range_min
-
         # Store data
-        # TODO: return extra dictionary for 'slider-values' with: range_value and slider_value
-        manipulated_data[col] = {
+        labeled_data[col] = {
             "positive": {"data": np.sort(positive_data_filtered)},
             "negative": {"data": np.sort(negative_data_filtered)},
             "unknown": {"data": np.sort(unknown_data_filtered)},
             "range_min": range_min,
             "range_max": range_max,
-            "range_value": range_value,
-            "slider_value": slider_value,
         }
-        # slider_values[col] = {
-        #   "range_value": range_value,
-        #   "slider_value": slider_value,
-        # }
-    return manipulated_data  #, slider_values
+    return labeled_data
 
 
 def calculate_bin_edges(
@@ -67,12 +57,12 @@ def calculate_bin_edges(
     return bin_edges
 
 
-def fit_params(file_data):
+def fit_params(labeled_data):
     fitted_data = {}
-    for column in file_data:
-        positive_data = file_data[column]["positive"]["data"]
-        negative_data = file_data[column]["negative"]["data"]
-        unknown_data = file_data[column]["unknown"]["data"]
+    for column, data in labeled_data.items():
+        positive_data = data["positive"]["data"]
+        negative_data = data["negative"]["data"]
+        unknown_data = data["unknown"]["data"]
 
         # Initialize all parameters to None
         pnl, pns, pgc, pgl, pgs, pel, pes, penk, penl, pens = (
@@ -169,65 +159,70 @@ def fit_params(file_data):
     return fitted_data
 
 
-def make_roc_curve(
-    positive_data, negative_data, unknown_data
-):  # view confusion matrix chart @ https://en.wikipedia.org/wiki/Receiver_operating_characteristic
-    total_positive = len(positive_data)
-    total_negative = len(negative_data)
-    total_unknown = len(unknown_data)
+def make_roc_curve(labeled_data):
+    # view confusion matrix chart @ https://en.wikipedia.org/wiki/Receiver_operating_characteristic
+    roc_curves = {}
+    for column, data in labeled_data.items():
+        positive_data = data["positive"]["data"]
+        negative_data = data["negative"]["data"]
+        unknown_data = data["unknown"]["data"]
 
-    if (
-        total_positive == 0 and total_positive == 0
-    ):  # usually if reference_result doesnt exist
-        return {
-            "population_data": [],
-            "total_positive": 0,
-            "total_negative": 0,
-            "total_unknown": 0,
-            "accumulated_positive_at_value": [],
-            "accumulated_negative_at_value": [],
-            "accumulated_unknown_at_value": [],
+        total_positive = len(positive_data)
+        total_negative = len(negative_data)
+        total_unknown = len(unknown_data)
+
+        if total_positive == 0 and total_positive == 0:
+            roc_curves[column] = {
+                "population_data": [],
+                "total_positive": 0,
+                "total_negative": 0,
+                "total_unknown": 0,
+                "accumulated_positive_at_value": [],
+                "accumulated_negative_at_value": [],
+                "accumulated_unknown_at_value": [],
+            }
+            continue
+
+        # make list of formated data values: tuple (value, True/False)
+        positive_tuples = [(value, True) for value in positive_data]
+        negative_tuples = [(value, False) for value in negative_data]
+        unknown_tuples = [(value, None) for value in unknown_data]
+
+        # create a sorted master list of all categories
+        population_data = sorted(
+            positive_tuples + negative_tuples + unknown_tuples, key=lambda x: x[0]
+        )
+
+        current_positive_count = 0
+        current_negative_count = 0
+        current_unknown_count = 0
+
+        accumulated_positive_at_value = []
+        accumulated_negative_at_value = []
+        accumulated_unknown_at_value = []
+
+        for value, label in population_data:
+            if label is True:
+                current_positive_count += 1
+            elif label is False:
+                current_negative_count += 1
+            elif label is None:
+                current_unknown_count += 1
+
+            accumulated_positive_at_value.append(current_positive_count)
+            accumulated_negative_at_value.append(current_negative_count)
+            accumulated_unknown_at_value.append(current_unknown_count)
+
+        roc_curves[column] = {
+            "population_data": population_data,
+            "total_positive": total_positive,
+            "total_negative": total_negative,
+            "total_unknown": total_unknown,
+            "accumulated_positive_at_value": accumulated_positive_at_value,
+            "accumulated_negative_at_value": accumulated_negative_at_value,
+            "accumulated_unknown_at_value": accumulated_unknown_at_value,
         }
-
-    # make list of formated data values: tuple (value, True/False)
-    positive_tuples = [(value, True) for value in positive_data]
-    negative_tuples = [(value, False) for value in negative_data]
-    unknown_tuples = [(value, None) for value in unknown_data]
-
-    # create a sorted master list of all categories
-    population_data = sorted(
-        positive_tuples + negative_tuples + unknown_tuples, key=lambda x: x[0]
-    )
-
-    current_positive_count = 0
-    current_negative_count = 0
-    current_unknown_count = 0
-
-    accumulated_positive_at_value = []
-    accumulated_negative_at_value = []
-    accumulated_unknown_at_value = []
-
-    for value, label in population_data:
-        if label is True:
-            current_positive_count += 1
-        elif label is False:
-            current_negative_count += 1
-        elif label is None:
-            current_unknown_count += 1
-
-        accumulated_positive_at_value.append(current_positive_count)
-        accumulated_negative_at_value.append(current_negative_count)
-        accumulated_unknown_at_value.append(current_unknown_count)
-
-    return {
-        "population_data": population_data,
-        "total_positive": total_positive,
-        "total_negative": total_negative,
-        "total_unknown": total_unknown,
-        "accumulated_positive_at_value": accumulated_positive_at_value,
-        "accumulated_negative_at_value": accumulated_negative_at_value,
-        "accumulated_unknown_at_value": accumulated_unknown_at_value,
-    }
+    return roc_curves
 
 
 def plot_roc_curve(roc_data, threshold_index):

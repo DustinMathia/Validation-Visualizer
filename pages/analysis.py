@@ -151,6 +151,7 @@ threshold_slider = html.Div(
                         min=0,
                         max=100,
                         value=0,
+                        updatemode="drag",
                         tooltip={
                             "placement": "top",
                             "always_visible": True,
@@ -186,6 +187,7 @@ range_slider = html.Div(
                         id="range-slider",
                         min=0,
                         max=100,
+                        updatemode="drag",
                         # dots=False,
                         value=[0, 100],
                         #            className="mb-3",  # Add margin-bottom
@@ -218,19 +220,22 @@ layout = dbc.Container(
                             [
                                 html.Div(
                                     [
-                                        dbc.DropdownMenu(
-                                            label="Select File",
+                                        dcc.Dropdown(
+                                            placeholder="Select File",
+                                            clearable=False,
                                             id="file-select",
-                                            class_name="mb-3",
+                                            className="mb-3",
                                         ),
                                     ]
                                 ),
                                 html.Div(
                                     [
-                                        dbc.DropdownMenu(
-                                            label="Select Column",
+                                        dcc.Dropdown(
+                                            placeholder="Select Column",
+                                            value=None,
+                                            clearable=False,
                                             id="column-select",
-                                            class_name="mb-3",
+                                            className="mb-3",
                                         ),
                                     ]
                                 ),
