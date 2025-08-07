@@ -26,7 +26,7 @@ dash.register_page(
 
 layout = dbc.Container(
     children=[
-        dcc.Store(id="manage-files-button-click"),
+        dcc.Store(id="manage-files-button-click", data={}),
         dbc.Col(
             dcc.Upload(
                 id="upload-data",
@@ -84,7 +84,7 @@ layout = dbc.Container(
                 ),
                 dbc.Col(
                     dag.AgGrid(
-                        id="view-file",
+                        id="file-viewer",
                         className="ag-theme-balham",
                         columnSize="autoSize",
                         defaultColDef={
@@ -115,14 +115,29 @@ def add_files_to_grid(files):
     df = pd.DataFrame(data)
     return df.to_dict("records")
 
+
 @callback(
     Output("manage-files-button-click", "data"),
     Input("manage-files", "cellRendererData"),
 )
-def showChange(n):
+def save_row_data(n):
     if not n:
         return no_update
-    print(json.dumps(n))
-    return no_update
+    return n
 
 
+@callback(
+        Output("file-viewer", "columnDefs"),
+        Output("file-viewer", "rowData"),
+        Input("manage-files-button-click", "data"),
+)
+def button_manager(button_data):
+    row = button_data["rowIndex"]
+    if button_data["colId"] == "view":
+        print(f"view {row}")
+    if button_data["colId"] == "download":
+        print(f"download {row}")
+    if button_data["colId"] == "delete":
+        print(f"delete {row}")
+
+    return None, None
