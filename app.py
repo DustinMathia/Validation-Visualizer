@@ -40,6 +40,26 @@ NEGATIVE = "#446e9b"
 UNKNOWN = "#999"
 THRESHOLD = "#d47500"
 
+SAVED_FILE_NAMES = {
+    "roc curves": "roc_curves.pkl",
+    "raw data": "raw_data.feather",
+    "labeled data": "labeled_data.pkl",
+    "parameter fitting": "fitted_params.pkl",
+}
+
+DATA_FOLDER = "data"
+
+app = Dash(
+    __name__,
+    external_stylesheets=[
+        SELECTED_BOOTSTRAP_THEME,
+        dbc.icons.BOOTSTRAP,
+        dbc_css,
+        custom_css,
+    ],
+    use_pages=True,
+    suppress_callback_exceptions=True,
+)
 
 navbar = dbc.NavbarSimple(
     children=[
@@ -96,18 +116,6 @@ alert_warning = html.Div(
     ],
 )
 
-app = Dash(
-    __name__,
-    external_stylesheets=[
-        SELECTED_BOOTSTRAP_THEME,
-        dbc.icons.BOOTSTRAP,
-        dbc_css,
-        custom_css,
-    ],
-    use_pages=True,
-    suppress_callback_exceptions=True,
-)
-
 
 @callback(
     Output("uploaded-files-list", "data", allow_duplicate=True),
@@ -120,7 +128,7 @@ app = Dash(
     State("uploaded-files-list", "data"),
     prevent_initial_call=True,
 )
-# Checks if files are valid then stores them in /data/filename/
+# Checks if uploaded files are valid
 def store_files(upload_contents, upload_filenames, uploaded_files_list):
     all_uploaded_files_list = uploaded_files_list if uploaded_files_list else []
     errors = []
@@ -250,17 +258,23 @@ def data_processing(uploaded_files_list, processed_files_list):
                 roc_curves = utils.make_roc_curve(labeled_data)
                 fitted_params = utils.fit_params(labeled_data)
 
-                labeled_data_filepath = os.path.join(file_dir, "labeled_data.pkl")
+                labeled_data_filepath = os.path.join(
+                    file_dir, SAVED_FILE_NAMES["labeled data"]
+                )
                 with open(labeled_data_filepath, "wb") as f:
                     pickle.dump(labeled_data, f)
-                roc_curves_filepath = os.path.join(file_dir, "roc_curves.pkl")
+                roc_curves_filepath = os.path.join(
+                    file_dir, SAVED_FILE_NAMES["roc curves"]
+                )
                 with open(roc_curves_filepath, "wb") as f:
                     pickle.dump(roc_curves, f)
-                fitted_params_filepath = os.path.join(file_dir, "fitted_params.pkl")
+                fitted_params_filepath = os.path.join(
+                    file_dir, SAVED_FILE_NAMES["parameter fitting"]
+                )
                 with open(fitted_params_filepath, "wb") as f:
                     pickle.dump(fitted_params, f)
 
-                raw_grid_filepath = os.path.join(file_dir, "raw_data.feather")
+                raw_grid_filepath = os.path.join(file_dir, SAVED_FILE_NAMES["raw data"])
                 df.to_feather(raw_grid_filepath)
 
                 new_labeled_data[filename] = labeled_data
@@ -371,7 +385,6 @@ def reset_range_slider(selected_column, n_clicks, rangeslider_value, labeled_dat
     Output("slider-position", "max"),
     Input("range-slider", "value"),
     State("slider-position", "value"),
-    prevent_initial_call=False,
 )
 def update_threshold_slider(rangeslider_value, slider_value):
     # If the current value is outside the new range, reset it to the new min
@@ -598,6 +611,25 @@ def update_column_dropdown(labeled_data):
     default_value = column_names[0] if column_names else None
 
     return options, default_value
+
+
+@app.callback(
+    Output("pos-statfit-select", "value"),
+    Output("neg-statfit-select", "value"),
+    Output("unknown-statfit-select", "value"),
+    Input("column-select", "value"),
+    State("pos-statfit-select", "value"),
+    State("neg-statfit-select", "value"),
+    State("unknown-statfit-select", "value"),
+)
+def init_statfit_select(selected_column, pos, neg, unk):
+    if not pos:
+        pos = "gompertz"
+    if not neg:
+        neg = "gompertz"
+    if not unk:
+        unk = "gompertz"
+    return pos, neg, unk
 
 
 # main graph #
@@ -914,7 +946,6 @@ def update_graph(
             xaxis=dict(
                 title=selected_column,
                 fixedrange=True,
-                side="top",
             ),
             yaxis=dict(
                 title="Density",
@@ -928,13 +959,39 @@ def update_graph(
         return fig
 
 
-@callback(Output("current-page", "data"), Input("url", "pathname"))
-def update_current_page(pathname):
-    return pathname
+# Init preprocessed data #
+
+
+def check_for_processed_files(data):
+    processed_files = []
+    required_files = list(SAVED_FILE_NAMES.values())
+
+    if not os.path.isdir(data):
+        return False
+
+    folders = [
+        os.path.join(data, f)
+        for f in os.listdir(data)
+        if os.path.isdir(os.path.join(data, f))
+    ]
+    for folder in folders:
+        if set(os.listdir(folder)) == set(required_files + [os.path.split(folder)[1]]):
+            processed_files.append(os.path.split(folder)[1])
+    return processed_files
+
+
+@callback(
+    Output("processed-files-list", "data"),
+    Input("loadup-dummy", "children"),
+    prevent_initial_call=False,
+)
+def load_data(dummy):
+    return check_for_processed_files(DATA_FOLDER)
 
 
 app.layout = html.Div(
     [
+        html.Div(id="loadup-dummy"),
         dcc.Location(id="url", refresh=False),
         dcc.Store(id="uploaded-files-list", data=[], storage_type="memory"),
         dcc.Store(id="processed-files-list", data=[], storage_type="memory"),
@@ -945,7 +1002,6 @@ app.layout = html.Div(
         dcc.Store(id="slider-value", data=None, storage_type="memory"),
         dcc.Store(id="range-value", data=[None, None], storage_type="memory"),
         dcc.Store(id="active-file", data=None, storage_type="memory"),
-        dcc.Store(id="current-page"),
         navbar,
         alert_fail,
         alert_warning,
