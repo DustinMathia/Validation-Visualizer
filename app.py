@@ -63,11 +63,9 @@ app = Dash(
 
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("Analysis", class_name="text-light", href="/")),
-        dbc.NavItem(
-            dbc.NavLink("Data-Manager", class_name="text-light", href="/data-manager")
-        ),
-        dbc.NavItem(dbc.NavLink("Help", class_name="text-light", href="/help")),
+        dbc.NavItem(dbc.NavLink("Visualize", class_name="", href="/")),
+        dbc.NavItem(dbc.NavLink("Data-Manager", class_name="", href="/data-manager")),
+        dbc.NavItem(dbc.NavLink("Help", class_name="", href="/help")),
     ],
     brand=html.A(
         dbc.Row(
@@ -229,6 +227,7 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
     )
 
 
+# TODO: when files with same filename are uploaded they do not replace the existing file
 @callback(
     Output("processed-files-list", "data", allow_duplicate=True),
     Output("labeled-data", "data", allow_duplicate=True),
@@ -467,12 +466,12 @@ def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves)
         )
         roc_fig.update_layout(
             showlegend=False,
-            xaxis=dict(range=[-0.05, 1.05], title="1 - Specificty"),
-            yaxis=dict(range=[-0.05, 1.05], title="Sensitivity"),
+            xaxis=dict(range=[-0.05, 1.05], title="1 - Specificty (TPR)"),
+            yaxis=dict(range=[-0.05, 1.05], title="Sensitivity (FPR)"),
         )
-        roc_table.update_layout(
-            margin=dict(l=10, r=10, t=180, b=10), width=525  # Reduce overall margins
-        )
+        # roc_table.update_layout(
+        #     margin=dict(l=10, r=10, t=10, b=10), width=525  # Reduce overall margins
+        # )
     return roc_fig, roc_table
 
 

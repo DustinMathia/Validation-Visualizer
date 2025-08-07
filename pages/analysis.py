@@ -275,22 +275,43 @@ layout = dbc.Container(
                 # Middle Column: Main Plot
                 dbc.Col(
                     [
-                        dbc.Row(
-                            dcc.Graph(
-                                id="graph",
-                                style={
-                                    "width": "100%",
-                                    "height": "450px",
-                                },  # Set a fixed height or make it responsive
-                                config={"doubleClick": False, "displayModeBar": False},
-                            )
-                        ),
-                        dbc.Row(
+                        dbc.Tabs(
                             [
-                                range_slider,
+                                dbc.Tab(
+                                    label="plot",
+                                    children=[
+                                        dbc.Row(
+                                            dcc.Graph(
+                                                id="graph",
+                                                # style={
+                                                #     "width": "100%",
+                                                #     "height": "450px",
+                                                # },  # Set a fixed height or make it responsive
+                                                config={
+                                                    "doubleClick": False,
+                                                    "displayModeBar": False,
+                                                },
+                                            )
+                                        ),
+                                        dbc.Row(
+                                            [
+                                                range_slider,
+                                            ],
+                                            align="start",
+                                            class_name="g-0",
+                                        ),
+                                    ],
+                                ),
+                                dbc.Tab(
+                                    label="ROC 2x2 Table",
+                                    children=[
+                                        dcc.Graph(
+                                            id="roc_table",
+                                            # style={"height": "525px", "width": "525px"},
+                                        )  # Set height for table
+                                    ],
+                                ),
                             ],
-                            align="start",
-                            class_name="g-0",
                         ),
                     ],
                     width=5,
@@ -306,7 +327,7 @@ layout = dbc.Container(
                                     children=[
                                         dcc.Graph(
                                             id="roc_plot",
-                                            style={"height": "525px"},
+                                            # style={"height": "525px"},
                                             config={
                                                 "doubleClick": False,
                                                 "displayModeBar": False,
@@ -315,16 +336,7 @@ layout = dbc.Container(
                                     ],
                                 ),
                                 dbc.Tab(
-                                    label="ROC Table",
-                                    children=[
-                                        dcc.Graph(
-                                            id="roc_table",
-                                            style={"height": "525px", "width": "525px"},
-                                        )  # Set height for table
-                                    ],
-                                ),
-                                dbc.Tab(
-                                    label="Raw Data",
+                                    label="File Viewer",
                                     children=[
                                         # TODO: dynamically size header minWidth
                                         dag.AgGrid(
@@ -339,9 +351,9 @@ layout = dbc.Container(
                                                 "sortable": True,
                                                 "filter": True,
                                             },
-                                            style={
-                                                "height": "525px"
-                                            },  # Set height for the grid
+                                            # style={
+                                            #     "height": "525px"
+                                            # },  # Set height for the grid
                                         )
                                     ],
                                 ),

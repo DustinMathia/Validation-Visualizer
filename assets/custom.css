@@ -32,3 +32,7 @@ styled correctly to look like a single, seamless component.
      z-index: 1000;
      box-sizing: border-box;
 }
+
+a:hover {
+cursor: pointer;
+}
