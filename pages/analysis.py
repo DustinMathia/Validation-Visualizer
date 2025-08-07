@@ -18,7 +18,7 @@ positive_buttons = html.Div(
                 {"label": "Expon. Norm.", "value": "exponnorm"},
             ],
             clearable=False,
-            placeholder="Positive Stat. Fit",
+            placeholder="Statistical Fit",
             id="pos-statfit-select",
             className="mb-3",
         ),
@@ -61,7 +61,7 @@ negative_buttons = html.Div(
                 {"label": "Expon. Norm.", "value": "exponnorm"},
             ],
             clearable=False,
-            placeholder="Negative Stat. Fit",
+            placeholder="Statistical Fit",
             id="neg-statfit-select",
             className="mb-3",
         ),
@@ -104,7 +104,7 @@ unknown_buttons = html.Div(
                 {"label": "Expon. Norm.", "value": "exponnorm"},
             ],
             clearable=False,
-            placeholder="Unknown Stat. Fit",
+            placeholder="Statistical Fit",
             id="unknown-statfit-select",
             className="mb-3",
         ),
@@ -139,32 +139,36 @@ threshold_slider = html.Div(
     [
         dbc.Row(
             [
-                dbc.Col(
-                    dbc.Button(
-                        id="auto-slide", class_name="bi bi-calculator py-0 px-1"
-                    ),
-                    width="auto",
-                ),
-                dbc.Col(
-                    dcc.Slider(
-                        id="slider-position",
-                        min=0,
-                        max=100,
-                        value=0,
-                        updatemode="drag",
-                        tooltip={
-                            "placement": "top",
-                            "always_visible": True,
-                            "style": {
-                                "margin-top": "0px",
-                                "margin-bottom": "-5px",
-                            },
+                dcc.Slider(
+                    id="slider-position",
+                    min=0,
+                    max=100,
+                    value=0,
+                    updatemode="drag",
+                    tooltip={
+                        "placement": "top",
+                        "always_visible": True,
+                        "style": {
+                            "margin-top": "0px",
+                            "margin-bottom": "-5px",
                         },
-                    ),
-                    width=True,
+                    },
                 ),
             ],
             align="center",
+        ),
+        dbc.Row(
+            [
+                html.Div(
+                    "text",
+                    id="threshold-slider-label",
+                    style={
+                        "textAlign": "center",
+                        "padding": "0px",
+                        "marginTop": "-15px",
+                    },
+                ),
+            ]
         ),
     ],
     className="p-2 border",
@@ -220,57 +224,53 @@ layout = dbc.Container(
                             [
                                 html.Div(
                                     [
+                                        html.P(
+                                            "File:",
+                                            style={"margin": "0", "padding": "0"},
+                                        ),
                                         dcc.Dropdown(
                                             placeholder="Select File",
                                             clearable=False,
                                             id="file-select",
-                                            className="mb-3",
+                                            className="wideDrop mb-3",  # "mb-3",
                                         ),
-                                    ]
-                                ),
-                                html.Div(
-                                    [
+                                        html.P(
+                                            "Column:",
+                                            style={"margin": "0", "padding": "0"},
+                                        ),
                                         dcc.Dropdown(
                                             placeholder="Select Column",
                                             value=None,
                                             clearable=False,
                                             id="column-select",
-                                            className="mb-3",
+                                            className="wideDrop mb-3",
                                         ),
-                                    ]
+                                    ],
+                                    style={"position": "relative"},
                                 ),
-                                html.Hr(
-                                    style={
-                                        "width": "100%",
-                                        "borderTop": "1px solid primary",
-                                        "borderBottom": "1px solid primary",
-                                        "opacity": "unset",
-                                    }
+                                html.Div(
+                                    [
+                                        positive_buttons,
+                                    ],
+                                    className="p-2 border",
                                 ),
-                                positive_buttons,
-                                html.Hr(
-                                    style={
-                                        "width": "100%",
-                                        "borderTop": "1px solid primary",
-                                        "borderBottom": "1px solid primary",
-                                        "opacity": "unset",
-                                    }
+                                html.Div(
+                                    [
+                                        negative_buttons,
+                                    ],
+                                    className="p-2 border",
                                 ),
-                                negative_buttons,
-                                html.Hr(
-                                    style={
-                                        "width": "100%",
-                                        "borderTop": "1px solid primary",
-                                        "borderBottom": "1px solid primary",
-                                        "opacity": "unset",
-                                    }
+                                html.Div(
+                                    [
+                                        unknown_buttons,
+                                    ],
+                                    className="p-2 border",
                                 ),
-                                unknown_buttons,
                             ]
                         )
                     ],
                     width=2,
-                    class_name="p-2 border",
+                    class_name="p-2 border dropdown-col",
                 ),  # Adjust width as needed, add some padding and border
                 # Middle Column: Main Plot
                 dbc.Col(
@@ -280,13 +280,17 @@ layout = dbc.Container(
                                 id="graph",
                                 style={
                                     "width": "100%",
-                                    "height": "525px",
+                                    "height": "450px",
                                 },  # Set a fixed height or make it responsive
                                 config={"doubleClick": False, "displayModeBar": False},
                             )
                         ),
                         dbc.Row(
-                            range_slider,
+                            [
+                                range_slider,
+                            ],
+                            align="start",
+                            class_name="g-0",
                         ),
                     ],
                     width=5,

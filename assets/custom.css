@@ -25,21 +25,10 @@ styled correctly to look like a single, seamless component.
     border-bottom-right-radius: 0.25rem;
 }
 
-/* Ensures the dropdown menu can overflow its container */
-.dash-dropdown {
-    overflow: visible;
-}
 
-/* Positions the dropdown menu over other elements with a high z-index */
-.dash-dropdown-menu {
-    position: absolute;
-    z-index: 1000;
-}
-
-/* Truncates the text of the dropdown button to prevent overflow */
-.dropdown-toggle {
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-    max-width: 100%;
+.wideDrop .Select-menu-outer {
+     width: 600px;
+     overflow: visible;
+     z-index: 1000;
+     box-sizing: border-box;
 }

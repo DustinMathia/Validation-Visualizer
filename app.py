@@ -383,6 +383,14 @@ def update_threshold_slider(rangeslider_value, slider_value):
     return slider_value, slider_value, rangeslider_value[0], rangeslider_value[1]
 
 
+@callback(
+    Output("threshold-slider-label", "children"),
+    Input("column-select", "value"),
+)
+def update_threshold_slider_label(selected_column):
+    return selected_column
+
+
 # roc figures #
 
 
@@ -679,6 +687,8 @@ def update_graph(
     positive_data = np.array(column_data.get("positive", {}).get("data", []))
     negative_data = np.array(column_data.get("negative", {}).get("data", []))
     unknown_data = np.array(column_data.get("unknown", {}).get("data", []))
+    range_min = column_data.get("range_min", 0)
+    range_max = column_data.get("range_max", 100)
 
     fig = make_subplots(
         rows=2,
@@ -686,27 +696,35 @@ def update_graph(
         row_heights=[0.93, 0.07],
         shared_xaxes="columns",
         vertical_spacing=0.01,
-        specs=[[{"secondary_y": True}], [{"type": "xy"}]],
+        specs=[[{"type": "xy"}], [{"type": "xy"}]],
     )
 
     if column_data and parameter_data:
         # Calculate Histogram points depending of ranger slider
-        bin_edges = utils.calculate_bin_edges(
-            column_data,
-            range_value,
-            pos_chart_types,
-            neg_chart_types,
-            unknown_chart_types,
-        )
+        bin_edges = utils.calculate_bin_edges(range_value, range_min, range_max)
         positive_hist, positive_bin_edges = np.histogram(
-            column_data["positive"]["data"], bins=bin_edges, range=range_value
+            column_data["positive"]["data"],
+            bins=bin_edges,
+            density=True,
         )
         negative_hist, negative_bin_edges = np.histogram(
-            column_data["negative"]["data"], bins=bin_edges, range=range_value
+            column_data["negative"]["data"],
+            bins=bin_edges,
+            density=True,
         )
         unknown_hist, unknown_bin_edges = np.histogram(
-            column_data["unknown"]["data"], bins=bin_edges, range=range_value
+            column_data["unknown"]["data"],
+            bins=bin_edges,
+            density=True,
         )
+
+        # values to stop graph from changing size when clicking buttons
+        graph_max_height = max(
+            positive_hist.max() if positive_hist.size > 0 else 0,
+            negative_hist.max() if negative_hist.size > 0 else 0,
+            unknown_hist.max() if unknown_hist.size > 0 else 0,
+        )
+        graph_yaxis_range = [0, graph_max_height * 1.1]
 
         positive_bar_widths = np.diff(positive_bin_edges)
         negative_bar_widths = np.diff(negative_bin_edges)
@@ -725,12 +743,12 @@ def update_graph(
                         marker_symbol="line-ns-open",
                         marker_color=UNKNOWN,
                         boxpoints="all",
-                        jitter=1,
+                        jitter=0.5,
                         fillcolor="rgba(255,255,255,0)",
                         line_color="rgba(255,255,255,0)",
                         hoveron="points",
                         showlegend=False,
-                        name="Unknowns Rug",
+                        name="Unknown",
                     ),
                     row=2,
                     col=1,
@@ -743,6 +761,7 @@ def update_graph(
                         name="Unknown",
                         marker_color=UNKNOWN,
                         width=unknown_bar_widths,
+                        opacity=0.7,
                     ),
                     row=1,
                     col=1,
@@ -762,64 +781,12 @@ def update_graph(
                         x=x_range_for_pdf,
                         y=unknown_pdf,
                         mode="lines",
-                        name="Unknowns",
+                        name="Unknown",
                         line_color=UNKNOWN,
+                        hoverinfo="skip",
                     ),
                     row=1,
                     col=1,
-                    secondary_y=True,
-                )
-
-        # Positive Trace
-        if positive_data.size > 0:
-            if "rug" in pos_chart_types:
-                fig.add_trace(
-                    go.Box(
-                        x=column_data["positive"]["data"],
-                        marker_symbol="line-ns-open",
-                        marker_color=POSITIVE,
-                        boxpoints="all",
-                        jitter=1,
-                        fillcolor="rgba(255,255,255,0)",
-                        line_color="rgba(255,255,255,0)",
-                        hoveron="points",
-                        showlegend=False,
-                        name="Positives Rug",
-                    ),
-                    row=2,
-                    col=1,
-                )
-
-            if "hist" in pos_chart_types:
-                fig.add_trace(
-                    go.Bar(
-                        x=positive_bar_center,
-                        y=positive_hist,
-                        name="Positives",
-                        marker_color=POSITIVE,
-                        width=positive_bar_widths,
-                    ),
-                    row=1,
-                    col=1,
-                    secondary_y=False,
-                )
-
-            if "stat" in pos_chart_types and pos_fit_dist != "none" and pos_fit_dist:
-                pos_params = parameter_data["positive"][pos_fit_dist]
-                positive_dist = getattr(stats, pos_fit_dist)
-                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
-                positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_range_for_pdf,
-                        y=positive_pdf,
-                        mode="lines",
-                        name="Positives",
-                        line_color=POSITIVE,
-                    ),
-                    row=1,
-                    col=1,
-                    secondary_y=True,
                 )
 
         # Negative Trace
@@ -831,12 +798,12 @@ def update_graph(
                         marker_symbol="line-ns-open",
                         marker_color=NEGATIVE,
                         boxpoints="all",
-                        jitter=1,
+                        jitter=0.5,
                         fillcolor="rgba(255,255,255,0)",
                         line_color="rgba(255,255,255,0)",
                         hoveron="points",
                         showlegend=False,
-                        name="Negatives Rug",
+                        name="Negative",
                     ),
                     row=2,
                     col=1,
@@ -847,13 +814,13 @@ def update_graph(
                     go.Bar(
                         x=negative_bar_center,
                         y=negative_hist,
-                        name="Negatives",
+                        name="Negative",
                         marker_color=NEGATIVE,
                         width=negative_bar_widths,
+                        opacity=0.7,
                     ),
                     row=1,
                     col=1,
-                    secondary_y=False,
                 )
 
             if "stat" in neg_chart_types and neg_fit_dist != "none" and neg_fit_dist:
@@ -866,12 +833,64 @@ def update_graph(
                         x=x_range_for_pdf,
                         y=negative_pdf,
                         mode="lines",
-                        name="Negatives",
+                        name="Negative",
                         line_color=NEGATIVE,
+                        hoverinfo="skip",
                     ),
                     row=1,
                     col=1,
-                    secondary_y=True,
+                )
+
+        # Positive Trace
+        if positive_data.size > 0:
+            if "rug" in pos_chart_types:
+                fig.add_trace(
+                    go.Box(
+                        x=column_data["positive"]["data"],
+                        marker_symbol="line-ns-open",
+                        marker_color=POSITIVE,
+                        boxpoints="all",
+                        jitter=0.5,
+                        fillcolor="rgba(255,255,255,0)",
+                        line_color="rgba(255,255,255,0)",
+                        hoveron="points",
+                        showlegend=False,
+                        name="Positive",
+                    ),
+                    row=2,
+                    col=1,
+                )
+
+            if "hist" in pos_chart_types:
+                fig.add_trace(
+                    go.Bar(
+                        x=positive_bar_center,
+                        y=positive_hist,
+                        name="Positive",
+                        marker_color=POSITIVE,
+                        width=positive_bar_widths,
+                        opacity=0.7,
+                    ),
+                    row=1,
+                    col=1,
+                )
+
+            if "stat" in pos_chart_types and pos_fit_dist != "none" and pos_fit_dist:
+                pos_params = parameter_data["positive"][pos_fit_dist]
+                positive_dist = getattr(stats, pos_fit_dist)
+                x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
+                positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
+                fig.add_trace(
+                    go.Scatter(
+                        x=x_range_for_pdf,
+                        y=positive_pdf,
+                        mode="lines",
+                        name="Positive",
+                        line_color=POSITIVE,
+                        hoverinfo="skip",
+                    ),
+                    row=1,
+                    col=1,
                 )
 
         if slider_value is not None:
@@ -885,7 +904,6 @@ def update_graph(
                 annotation_font=dict(size=18),
                 row=1,
                 col=1,
-                secondary_y=True,
             )
 
         fig.update_yaxes(showticklabels=False, row=2, col=1)
@@ -893,11 +911,18 @@ def update_graph(
         fig.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
         fig.update_layout(
             margin=dict(l=20, r=20, t=0, b=0),
-            xaxis=dict(fixedrange=True),
-            yaxis=dict(fixedrange=True),
+            xaxis=dict(
+                title=selected_column,
+                fixedrange=True,
+                side="top",
+            ),
+            yaxis=dict(
+                title="Density",
+                range=graph_yaxis_range,
+            ),
             showlegend=False,
             dragmode=False,
-            barmode="overlay",
+            barmode="group",
         )
 
         return fig

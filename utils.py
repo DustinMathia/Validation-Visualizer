@@ -17,6 +17,7 @@ def label_data(df):
     ]
 
     for col in numeric_cols:
+
         # Filter data based on reference_result
         if "reference_result" in df.columns:
             df["reference_result"] = df["reference_result"].fillna(0)
@@ -49,11 +50,16 @@ def label_data(df):
     return labeled_data
 
 
-def calculate_bin_edges(
-    column_data, range_value, pos_chart_types, neg_chart_types, unknown_chart_types
-):
-    num_bins = 100
-    bin_edges = np.linspace(range_value[0], range_value[1], num_bins + 1)
+def calculate_bin_edges(range_value, range_min, range_max):
+    num_bins_on_screen = 100
+
+    visible_range_width = range_value[1] - range_value[0]
+    step = visible_range_width / num_bins_on_screen
+
+    start = np.floor(range_min / step) * step
+    stop = np.ceil(range_max / step) * step
+
+    bin_edges = np.arange(start, stop + step, step)
     return bin_edges
 
 
