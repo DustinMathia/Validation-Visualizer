@@ -117,6 +117,25 @@ alert_warning = html.Div(
 )
 
 
+app.layout = html.Div(
+    [
+        html.Div(id="loadup-dummy"),
+        dcc.Store(id="uploaded-files-list", data=[], storage_type="memory"),
+        dcc.Store(id="processed-files-list", data=[], storage_type="memory"),
+        dcc.Store(id="raw-data-for-grid", data={}, storage_type="memory"),
+        dcc.Store(id="labeled-data", data={}, storage_type="memory"),
+        dcc.Store(id="fit-params", data={}, storage_type="memory"),
+        dcc.Store(id="roc-curves", data={}, storage_type="memory"),
+        dcc.Store(id="slider-value", data=None, storage_type="memory"),
+        dcc.Store(id="range-value", data=[None, None], storage_type="memory"),
+        navbar,
+        alert_fail,
+        alert_warning,
+        dash.page_container,
+    ]
+)
+
+
 @callback(
     Output("uploaded-files-list", "data", allow_duplicate=True),
     Output("alert-fail", "is_open", allow_duplicate=True),
@@ -607,6 +626,10 @@ def update_column_dropdown(labeled_data):
         return [], None
 
     column_names = list(labeled_data.keys())
+    # try:
+    #     column_names.remove("reference_result")
+    # except ValueError:
+    #     pass
     options = [{"label": column, "value": column} for column in column_names]
     default_value = column_names[0] if column_names else None
 
@@ -987,27 +1010,6 @@ def check_for_processed_files(data):
 )
 def load_data(dummy):
     return check_for_processed_files(DATA_FOLDER)
-
-
-app.layout = html.Div(
-    [
-        html.Div(id="loadup-dummy"),
-        dcc.Location(id="url", refresh=False),
-        dcc.Store(id="uploaded-files-list", data=[], storage_type="memory"),
-        dcc.Store(id="processed-files-list", data=[], storage_type="memory"),
-        dcc.Store(id="raw-data-for-grid", data={}, storage_type="memory"),
-        dcc.Store(id="labeled-data", data={}, storage_type="memory"),
-        dcc.Store(id="fit-params", data={}, storage_type="memory"),
-        dcc.Store(id="roc-curves", data={}, storage_type="memory"),
-        dcc.Store(id="slider-value", data=None, storage_type="memory"),
-        dcc.Store(id="range-value", data=[None, None], storage_type="memory"),
-        dcc.Store(id="active-file", data=None, storage_type="memory"),
-        navbar,
-        alert_fail,
-        alert_warning,
-        dash.page_container,
-    ]
-)
 
 
 if __name__ == "__main__":

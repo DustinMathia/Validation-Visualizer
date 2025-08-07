@@ -28,7 +28,13 @@ layout = dbc.Container(
             width=12,
         ),
         dag.AgGrid(
+            id="manage-files",
             className="ag-theme-balham",
+            columnDefs = [
+                {"field": "Filename"},
+                # {"field": "Download"},
+                # {"field": "Delete"},
+                ],
             # other props
         ),
     ]
