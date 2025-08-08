@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import bisect
 import math
+from dash import dash_table
 
 # from app import THRESHOLD
 
@@ -416,13 +417,27 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
     z_score = (threshold_value - mean) / std if std != 0 else float("nan")
     z_score = round(z_score, 2)
 
-    roc_table_header = ["TP", "FN", "FP", "TN"]
-    roc_table = [
-        [tp_val, "Sensitivity (TPR)", tpr_val, "Unkn. as Pos.", up_val],
-        [fn_val, "Miss Rate (FNR)", fnr_val, "Unkn. as Neg.", un_val],
-        [fp_val, "False Alarm (FPR)", fpr_val, "Accuracy", acc_val],
-        [tn_val, "Specificity (TNR)", tnr_val, "Z-score", z_score],
+    roc_table_for_df = [
+        ["A", "B", "C", "D"],
+        ["TP", "FN", "FP", "TN"],
+        [tp_val, fn_val, fp_val, tn_val],
+        [
+            "Sensitivity (TPR)",
+            "Miss Rate (FNR)",
+            "False Alarm (FPR)",
+            "Specificity (TNR)",
+        ],
+        [tpr_val, fnr_val, fpr_val, tnr_val],
+        ["Unkn. as Pos.", "Unkn. as Neg.", "Accuracy", "Z-score"],
+        [up_val, un_val, acc_val, z_score],
     ]
 
-    # use only "i" to return to normal
-    return roc_table, roc_table_header, i  # _without_unknown
+    df = pd.DataFrame(roc_table_for_df)
+    new_header = df.iloc[0]
+    df.columns = new_header
+    df = df[1:].reset_index(drop=True)
+
+    data = df.to_dict("records")
+    columns = [{"name": i, "id": i} for i in df.columns]
+
+    return data, columns, i

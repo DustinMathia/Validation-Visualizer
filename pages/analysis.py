@@ -1,5 +1,5 @@
 import dash
-from dash import dcc, html, Input, Output, callback
+from dash import dcc, html, Input, Output, callback, dash_table
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag  # AgGrid
 
@@ -305,10 +305,27 @@ layout = dbc.Container(
                                 dbc.Tab(
                                     label="ROC 2x2 Table",
                                     children=[
-                                        dcc.Graph(
-                                            id="roc_table",
-                                            # style={"height": "525px", "width": "525px"},
-                                        )  # Set height for table
+                                        dash_table.DataTable(
+                                            id="roc-table",
+                                            columns=[],
+                                            data=[],
+                                            style_table={
+                                                "width": "100%",
+                                                "overflowX": "auto",
+                                            },
+                                            style_cell={
+                                                "whiteSpace": "normal",
+                                                "overflow": "hidden",
+                                                "textOverflow": "ellipsis",
+                                                "maxWidth": 0,
+                                                "fontSize": "12px",  # Adjust the font size as needed
+                                            },
+                                            style_header={"display": "none"},
+                                        ),
+                                        # dcc.Graph(
+                                        #     id="roc-table",
+                                        #     # style={"height": "525px", "width": "525px"},
+                                        # )  # Set height for table
                                     ],
                                 ),
                             ],

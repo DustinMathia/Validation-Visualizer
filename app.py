@@ -439,7 +439,8 @@ no_fig.update_layout(xaxis={"visible": False}, yaxis={"visible": False})
 
 @app.callback(
     Output("roc_plot", "figure"),
-    Output("roc_table", "figure"),
+    Output("roc-table", "data"),
+    Output("roc-table", "columns"),
     Input("column-select", "value"),
     Input("slider-position", "value"),
     State("fit-params", "data"),
@@ -448,34 +449,18 @@ no_fig.update_layout(xaxis={"visible": False}, yaxis={"visible": False})
 )
 def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves):
     if not roc_curves or not selected_column:
-        return no_fig, no_fig
+        return no_fig, None, None
 
     roc_column = roc_curves.get(selected_column)
 
     # Check if roc_column and its population_data are available and not empty
     if not roc_column or not roc_column.get("population_data"):
-        return no_fig, no_fig
+        return no_fig, None, None
     else:
-        roc_table, roc_table_header, roc_index = utils.gen_roc_table(
+        ROCDataTable_data, ROCDataTable_columns, roc_index = utils.gen_roc_table(
             roc_column, pos_x, fitted_params[selected_column]["positive"]["norm"]
         )
         roc_fig = utils.plot_roc_curve(roc_column, roc_index)
-        roc_table = go.Figure(
-            data=[
-                go.Table(
-                    header=dict(
-                        values=roc_table_header, fill_color="#f8f8f8", align="left"
-                    ),
-                    cells=dict(
-                        values=[roc_table[0], roc_table[1], roc_table[2], roc_table[3]],
-                        fill_color=[
-                            ["#fcfcfc", "#f8f8f8", "#fcfcfc", "#f8f8f8", "#fcfcfc"] * 4
-                        ],
-                        align="left",
-                    ),
-                )
-            ]
-        )
         roc_fig.update_layout(
             showlegend=False,
             xaxis=dict(range=[-0.05, 1.05], title="1 - Specificty (TPR)"),
@@ -484,7 +469,7 @@ def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves)
         # roc_table.update_layout(
         #     margin=dict(l=10, r=10, t=10, b=10), width=525  # Reduce overall margins
         # )
-    return roc_fig, roc_table
+    return roc_fig, ROCDataTable_data, ROCDataTable_columns
 
 
 @app.callback(
@@ -698,8 +683,8 @@ def set_threshold_on_click_maingraph(clickData, range_value):
 
 
 @app.callback(
-    Output("graph-cache", "data"),
-    # Output("graph", "figure", allow_duplicate=True),
+    # Output("graph-cache", "data"),
+    Output("graph", "figure", allow_duplicate=True),
     [
         Input("pos-statfit-select", "value"),
         Input("neg-statfit-select", "value"),
@@ -1030,18 +1015,18 @@ def update_graph_and_cache(
             )
 
             # Comment for cache func
-            # if slider_value is not None:
-            #     fig.add_vline(
-            #         x=slider_value,
-            #         line_width=3,
-            #         line_dash="dashdot",
-            #         line_color=THRESHOLD,
-            #         annotation_text=f"{slider_value:.2f}",
-            #         annotation_position="top right",
-            #         annotation_font=dict(size=18),
-            #         row=1,
-            #         col=1,
-            #     ),
+            if slider_value is not None:
+                fig.add_vline(
+                    x=slider_value,
+                    line_width=3,
+                    line_dash="dashdot",
+                    line_color=THRESHOLD,
+                    annotation_text=f"{slider_value:.2f}",
+                    annotation_position="top right",
+                    annotation_font=dict(size=18),
+                    row=1,
+                    col=1,
+                ),
 
         fig.update_yaxes(showticklabels=False, row=2, col=1)
         fig.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
@@ -1062,34 +1047,34 @@ def update_graph_and_cache(
             clickmode="event+select",
         )
 
-        return fig.to_dict()
+        return fig  # .to_dict()
 
 
-@callback(
-    Output("graph", "figure", allow_duplicate=True),
-    Input("slider-position", "value"),
-    State("graph-cache", "data"),
-    prevent_initial_call=True,
-)
-def load_graph_add_vline(slider_position, graph_json):
-    if not graph_json:
-        raise dash.exceptions.PreventUpdate
-
-    graph = go.Figure(graph_json)
-
-    if slider_position is not None:
-        graph.add_vline(
-            x=slider_position,
-            line_width=3,
-            line_dash="dashdot",
-            line_color=THRESHOLD,
-            annotation_text=f"{slider_position:.2f}",
-            annotation_position="top right",
-            annotation_font=dict(size=18),
-            row=1,
-            col=1,
-        ),
-    return graph
+# @callback(
+#     Output("graph", "figure", allow_duplicate=True),
+#     Input("slider-position", "value"),
+#     State("graph-cache", "data"),
+#     prevent_initial_call=True,
+# )
+# def load_graph_add_vline(slider_position, graph_json):
+#     if not graph_json:
+#         raise dash.exceptions.PreventUpdate
+#
+#     graph = go.Figure(graph_json)
+#
+#     if slider_position is not None:
+#         graph.add_vline(
+#             x=slider_position,
+#             line_width=3,
+#             line_dash="dashdot",
+#             line_color=THRESHOLD,
+#             annotation_text=f"{slider_position:.2f}",
+#             annotation_position="top right",
+#             annotation_font=dict(size=18),
+#             row=1,
+#             col=1,
+#         ),
+#     return graph
 
 
 # Init preprocessed data #
