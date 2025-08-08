@@ -17,6 +17,18 @@ from dash import (
 )
 import pandas as pd
 import json
+import os
+
+
+SAVED_FILE_NAMES = {
+    "roc curves": "roc_curves.pkl",
+    "raw data": "raw_data.feather",
+    "labeled data": "labeled_data.pkl",
+    "parameter fitting": "fitted_params.pkl",
+}
+
+DATA_FOLDER = "data"
+
 
 dash.register_page(
     __name__,
@@ -27,6 +39,7 @@ dash.register_page(
 layout = dbc.Container(
     children=[
         dcc.Store(id="manage-files-button-click", data={}),
+        dcc.Download(id="download-xlsx"),
         dbc.Col(
             dcc.Upload(
                 id="upload-data",
@@ -53,13 +66,16 @@ layout = dbc.Container(
                 dbc.Col(
                     dag.AgGrid(
                         id="manage-files",
-                        className="ag-theme-balham",
+                        # className="ag-theme-balham",
                         defaultColDef = {
                             "sortable": False,
                             "filter": False,
                             "resizable": False,
                             "flex": False,
-                            "autoHeight": True,
+                            "rowHeight": 500,
+                        },
+                        dashGridOptions={
+                            "rowHeight": 35,  # Sets all rows to 50px height
                         },
                         columnDefs = [
                             {"field": "filename", "sortable": True, "filter": True, "flex": True},
@@ -86,13 +102,17 @@ layout = dbc.Container(
                     dag.AgGrid(
                         id="file-viewer",
                         className="ag-theme-balham",
+                        columnDefs=[],
+                        rowData=[],
                         columnSize="autoSize",
-                        defaultColDef={
-                            "resizable": True,
+                        defaultColDef = {
                             "sortable": True,
                             "filter": True,
+                            "resizable": True,
                         },
-                        # other props
+                        # dashGridOptions={
+                        #     "rowHeight": 20,
+                        # },
                     ),
                     width=6,
                 ),
@@ -129,15 +149,46 @@ def save_row_data(n):
 @callback(
         Output("file-viewer", "columnDefs"),
         Output("file-viewer", "rowData"),
+        Output("download-xlsx", "data"),
+        Output("processed-files-list", "data", allow_duplicate=True),
         Input("manage-files-button-click", "data"),
+        State("manage-files", "rowData"),
+        State("processed-files-list", "data"),
+        prevent_initial_call=True
 )
-def button_manager(button_data):
-    row = button_data["rowIndex"]
-    if button_data["colId"] == "view":
-        print(f"view {row}")
-    if button_data["colId"] == "download":
-        print(f"download {row}")
-    if button_data["colId"] == "delete":
-        print(f"delete {row}")
+def button_manager(button_data, row_data, processed_files):
+    row      = button_data["rowIndex"]
+    action   = button_data["colId"]
+    filename = row_data[row]["filename"]
+    filepath = os.path.join(DATA_FOLDER, filename, SAVED_FILE_NAMES["raw data"])
 
-    return None, None
+    out_columnDefs = None
+    out_rowData = None
+    out_download = None
+
+    match action:
+        case "view":
+            df = pd.read_feather(filepath)
+            out_rowData=df.to_dict("records")
+            out_columnDefs=[
+                        {
+                            "headerName" : filename,
+                            "children" : [{"field": i} for i in df.columns]
+                        }
+                    ]
+        case "download":
+            df = pd.read_feather(filepath)
+            out_download = dcc.send_data_frame(df.to_excel, filename, sheet_name="Sheet1")
+        case "delete":
+            processed_files.remove(filename)
+            os.remove(filepath)
+
+    return out_columnDefs, out_rowData, out_download, processed_files
+
+@callback(
+    Output('file-viewer', 'columnSize'),
+    Input('file-viewer', 'columnDefs'),
+    prevent_initial_call=True
+)
+def trigger_autosize_after_data_update(_):
+    return "autoSize"

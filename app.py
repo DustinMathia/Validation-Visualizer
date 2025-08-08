@@ -19,7 +19,6 @@ import pandas as pd
 from scipy import stats
 import base64
 import pickle
-import feather
 import io
 import os
 import shutil
@@ -425,6 +424,19 @@ def update_threshold_slider_label(selected_column):
 # roc figures #
 
 
+no_fig = go.Figure()
+no_fig.add_annotation(
+    text="No Data",
+    xref="paper",
+    yref="paper",
+    x=0.5,
+    y=0.5,
+    showarrow=False,
+    font=dict(size=24, color="grey"),
+)
+no_fig.update_layout(xaxis={"visible": False}, yaxis={"visible": False})
+
+
 @app.callback(
     Output("roc_plot", "figure"),
     Output("roc_table", "figure"),
@@ -436,13 +448,13 @@ def update_threshold_slider_label(selected_column):
 )
 def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves):
     if not roc_curves or not selected_column:
-        return go.Figure(), go.Figure()
+        return no_fig, no_fig
 
     roc_column = roc_curves.get(selected_column)
 
     # Check if roc_column and its population_data are available and not empty
     if not roc_column or not roc_column.get("population_data"):
-        return go.Figure(), go.Figure()
+        return no_fig, no_fig
     else:
         roc_table, roc_table_header, roc_index = utils.gen_roc_table(
             roc_column, pos_x, fitted_params[selected_column]["positive"]["norm"]
@@ -772,13 +784,7 @@ def update_graph(
             density=True,
         )
 
-        # values to stop graph from changing size when clicking buttons
-        graph_max_height = max(
-            positive_hist.max() if positive_hist.size > 0 else 0,
-            negative_hist.max() if negative_hist.size > 0 else 0,
-            unknown_hist.max() if unknown_hist.size > 0 else 0,
-        )
-        graph_yaxis_range = [0, graph_max_height * 1.1]
+        graph_max_height = 0
 
         positive_bar_widths = np.diff(positive_bin_edges)
         negative_bar_widths = np.diff(negative_bin_edges)
@@ -808,6 +814,8 @@ def update_graph(
                     col=1,
                 )
             if "hist" in unknown_chart_types:
+                if max(unknown_hist) > graph_max_height:
+                    graph_max_height = max(unknown_hist)
                 fig.add_trace(
                     go.Bar(
                         x=unknown_bar_center,
@@ -830,6 +838,8 @@ def update_graph(
                 unknown_dist = getattr(stats, unknown_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
                 unknown_pdf = unknown_dist.pdf(x_range_for_pdf, **unknown_params)
+                if max(unknown_pdf) > graph_max_height:
+                    graph_max_height = max(unknown_pdf)
                 fig.add_trace(
                     go.Scatter(
                         x=x_range_for_pdf,
@@ -864,6 +874,8 @@ def update_graph(
                 )
 
             if "hist" in neg_chart_types:
+                if max(negative_hist) > graph_max_height:
+                    graph_max_height = max(negative_hist)
                 fig.add_trace(
                     go.Bar(
                         x=negative_bar_center,
@@ -882,6 +894,8 @@ def update_graph(
                 negative_dist = getattr(stats, neg_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
                 negative_pdf = negative_dist.pdf(x_range_for_pdf, **neg_params)
+                if max(negative_pdf) > graph_max_height:
+                    graph_max_height = max(negative_pdf)
                 fig.add_trace(
                     go.Scatter(
                         x=x_range_for_pdf,
@@ -916,6 +930,8 @@ def update_graph(
                 )
 
             if "hist" in pos_chart_types:
+                if max(positive_hist) > graph_max_height:
+                    graph_max_height = max(positive_hist)
                 fig.add_trace(
                     go.Bar(
                         x=positive_bar_center,
@@ -934,6 +950,8 @@ def update_graph(
                 positive_dist = getattr(stats, pos_fit_dist)
                 x_range_for_pdf = np.linspace(range_value[0], range_value[1], 300)
                 positive_pdf = positive_dist.pdf(x_range_for_pdf, **pos_params)
+                if max(positive_pdf) > graph_max_height:
+                    graph_max_height = max(positive_pdf)
                 fig.add_trace(
                     go.Scatter(
                         x=x_range_for_pdf,
@@ -959,6 +977,8 @@ def update_graph(
                 row=1,
                 col=1,
             )
+
+        graph_yaxis_range = [0, graph_max_height * 1.1]
 
         fig.update_yaxes(showticklabels=False, row=2, col=1)
         fig.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)

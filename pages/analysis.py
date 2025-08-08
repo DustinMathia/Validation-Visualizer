@@ -1,5 +1,5 @@
 import dash
-from dash import dcc, html
+from dash import dcc, html, Input, Output, callback
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag  # AgGrid
 
@@ -165,7 +165,7 @@ threshold_slider = html.Div(
                     style={
                         "textAlign": "center",
                         "padding": "0px",
-                        "marginTop": "-15px",
+                        "marginTop": "-5px",
                     },
                 ),
             ]
@@ -321,7 +321,8 @@ layout = dbc.Container(
                 dbc.Col(
                     [
                         dbc.Tabs(
-                            [
+                            id="right-tabs",
+                            children=[
                                 dbc.Tab(
                                     label="ROC Curve",
                                     children=[
@@ -344,8 +345,7 @@ layout = dbc.Container(
                                             className="ag-theme-balham",
                                             columnDefs=[],
                                             rowData=[],
-                                            columnSize="responsiveSizeToFit",
-                                            columnSizeOptions={"skipHeader": False},
+                                            columnSize="autoSize",
                                             defaultColDef={
                                                 "resizable": True,
                                                 "sortable": True,
@@ -357,7 +357,7 @@ layout = dbc.Container(
                                         )
                                     ],
                                 ),
-                            ]
+                            ],
                         )
                     ],
                     width=5,
@@ -368,3 +368,13 @@ layout = dbc.Container(
         ),
     ],
 )
+
+
+@callback(
+    Output("ag-grid", "columnSize"),
+    Input("ag-grid", "columnDefs"),
+    Input("right-tabs", "active_tab"),
+    prevent_initial_call=True,
+)
+def trigger_autosize_after_data_update(_, __):
+    return "autoSize"
