@@ -306,7 +306,7 @@ def plot_roc_curve(roc_data, threshold_index):
                 line_shape="hv",
                 name="ROC Curve",
                 customdata=threshold_plot,
-                hovertemplate="Threshold: %{customdata:.2f}<br>"
+                hovertemplate="Threshold: <b>%{customdata:.2f}</b><br>"
                 + "Sensitivity (FPR): %{y:.2f}<br>"
                 + "1 - Specificity (TPR): %{x:.2f}",
             )
@@ -319,7 +319,7 @@ def plot_roc_curve(roc_data, threshold_index):
                 marker=dict(color=THRESHOLD, size=15, symbol="circle"),
                 name="Threshold Point",
                 customdata=[threshold],
-                hovertemplate="Threshold: %{customdata:.2f}<br>"
+                hovertemplate="Threshold: <b>%{customdata:.2f}</b><br>"
                 + "Sensitivity (FPR): %{y:.2f}<br>"
                 + "1 - Specificity (TPR): %{x:.2f}",
             )

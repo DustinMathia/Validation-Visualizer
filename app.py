@@ -836,6 +836,7 @@ def update_graph(
                         hoveron="points",
                         showlegend=False,
                         name="Unknown",
+                        hovertemplate="Threshold: <b>%{x:.2f}</b>",
                     ),
                     row=2,
                     col=1,
@@ -851,6 +852,7 @@ def update_graph(
                         marker_color=UNKNOWN,
                         width=unknown_bar_widths,
                         opacity=0.7,
+                        hoverinfo="none",
                     ),
                     row=1,
                     col=1,
@@ -895,6 +897,7 @@ def update_graph(
                         hoveron="points",
                         showlegend=False,
                         name="Negative",
+                        hovertemplate="Threshold: <b>%{x:.2f}</b>",
                     ),
                     row=2,
                     col=1,
@@ -911,6 +914,7 @@ def update_graph(
                         marker_color=NEGATIVE,
                         width=negative_bar_widths,
                         opacity=0.7,
+                        hoverinfo="none",
                     ),
                     row=1,
                     col=1,
@@ -951,6 +955,7 @@ def update_graph(
                         hoveron="points",
                         showlegend=False,
                         name="Positive",
+                        hovertemplate="Threshold: <b>%{x:.2f}</b>",
                     ),
                     row=2,
                     col=1,
@@ -967,6 +972,7 @@ def update_graph(
                         marker_color=POSITIVE,
                         width=positive_bar_widths,
                         opacity=0.7,
+                        hoverinfo="none",
                     ),
                     row=1,
                     col=1,
@@ -990,7 +996,7 @@ def update_graph(
                     ),
                     row=1,
                     col=1,
-                )
+                ),
 
         if slider_value is not None:
             fig.add_vline(
@@ -1006,6 +1012,33 @@ def update_graph(
             )
 
         graph_yaxis_range = [0, graph_max_height * 1.1]
+
+        if (
+            "stat" in pos_chart_types
+            and pos_fit_dist != "none"
+            and pos_fit_dist
+            and positive_data.size > 0
+        ):
+            ppf_at_value = positive_dist.ppf(0.01, **pos_params)
+            fig.add_shape(
+                type="line",
+                x0=ppf_at_value,
+                y0=0,
+                x1=ppf_at_value,
+                y1=graph_max_height,
+                line=dict(color=POSITIVE, width=1, dash="dash"),
+            )
+            fig.add_annotation(
+                x=ppf_at_value,
+                y=graph_max_height,
+                xref="x",
+                yref="y",
+                text="p=0.01",
+                showarrow=False,
+                yanchor="bottom",
+                font=dict(size=10, color=POSITIVE),
+                bgcolor="rgba(0, 0, 0, 0)",
+            )
 
         fig.update_yaxes(showticklabels=False, row=2, col=1)
         fig.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)

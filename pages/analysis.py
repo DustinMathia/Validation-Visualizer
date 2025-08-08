@@ -115,7 +115,7 @@ unknown_buttons = html.Div(
                     id="unk-btn-1",
                     n_clicks=0,
                     color="primary",
-                    outline=True,
+                    outline=False,
                 ),
                 dbc.Button(
                     "Hist.", id="unk-btn-2", n_clicks=0, color="primary", outline=False
@@ -278,7 +278,7 @@ layout = dbc.Container(
                         dbc.Tabs(
                             [
                                 dbc.Tab(
-                                    label="plot",
+                                    label="Visualize",
                                     children=[
                                         dbc.Row(
                                             dcc.Graph(
