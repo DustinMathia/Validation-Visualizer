@@ -167,6 +167,7 @@ def fit_params(labeled_data):
     return fitted_data
 
 
+# mistitled, more like count labels at each point
 def make_roc_curve(labeled_data):
     # view confusion matrix chart @ https://en.wikipedia.org/wiki/Receiver_operating_characteristic
     roc_curves = {}
@@ -233,6 +234,19 @@ def make_roc_curve(labeled_data):
     return roc_curves
 
 
+no_fig = go.Figure()
+no_fig.add_annotation(
+    text="No Data",
+    xref="paper",
+    yref="paper",
+    x=0.5,
+    y=0.5,
+    showarrow=False,
+    font=dict(size=24, color="grey"),
+)
+no_fig.update_layout(xaxis={"visible": False}, yaxis={"visible": False})
+
+
 def plot_roc_curve(roc_data, threshold_index):
     population_data = roc_data["population_data"]
     total_positive = roc_data["total_positive"]
@@ -242,10 +256,12 @@ def plot_roc_curve(roc_data, threshold_index):
 
     TPR_plot = [1]
     FPR_plot = [1]
-    if total_positive == 0 and total_negative == 0:
-        return go.Figure()
+    threshold_plot = [population_data[0][0]]
 
-    for k in range(len(population_data)):
+    if total_positive == 0 and total_negative == 0:
+        return no_fig
+
+    for k, pop in enumerate(population_data):
         positives_less_than_current_value = acc_pos[k - 1] if k > 0 else 0
         negatives_less_than_current_value = acc_neg[k - 1] if k > 0 else 0
 
@@ -257,8 +273,11 @@ def plot_roc_curve(roc_data, threshold_index):
 
         TPR_plot.append(tpr_at_k)
         FPR_plot.append(fpr_at_k)
+        threshold_plot.append(pop[0])
+
     TPR_plot.append(0)
     FPR_plot.append(0)
+    threshold_plot.append(population_data[-1][0])
 
     thresh_pt_x = 0
     thresh_pt_y = 0
@@ -275,11 +294,21 @@ def plot_roc_curve(roc_data, threshold_index):
         thresh_pt_x = FPR_plot[threshold_index + 1]
         thresh_pt_y = TPR_plot[threshold_index + 1]
 
+    threshold = population_data[threshold_index][0]
+
     fig = go.Figure()
     if FPR_plot and TPR_plot:  # Ensure lists are not empty
         fig.add_trace(
             go.Scatter(
-                x=FPR_plot, y=TPR_plot, mode="lines", line_shape="hv", name="ROC Curve"
+                x=FPR_plot,
+                y=TPR_plot,
+                mode="lines",
+                line_shape="hv",
+                name="ROC Curve",
+                customdata=threshold_plot,
+                hovertemplate="Threshold: %{customdata:.2f}<br>"
+                + "Sensitivity (FPR): %{y:.2f}<br>"
+                + "1 - Specificity (TPR): %{x:.2f}",
             )
         )
         fig.add_trace(
@@ -289,30 +318,26 @@ def plot_roc_curve(roc_data, threshold_index):
                 mode="markers",
                 marker=dict(color=THRESHOLD, size=15, symbol="circle"),
                 name="Threshold Point",
+                customdata=[threshold],
+                hovertemplate="Threshold: %{customdata:.2f}<br>"
+                + "Sensitivity (FPR): %{y:.2f}<br>"
+                + "1 - Specificity (TPR): %{x:.2f}",
             )
-        )
-        fig.update_layout(
-            xaxis_title="False Positive Rate (FPR)",
-            yaxis_title="True Positive Rate (TPR)",
-            xaxis=dict(range=[0, 1]),
-            yaxis=dict(range=[0, 1]),
-            dragmode=False,
         )
     return fig
 
 
-def bisect_population_w_threshold(roc_data, threshold_value):
-    population_data_values = [item[0] for item in roc_data["population_data"]]
+def bisect_population_w_threshold(pop_data, threshold_value):
     # bisect_left returns an insertion point `i` such that all `a[k]` for `k < i` have `a[k] < x`.
     # And all `a[k]` for `k >= i` have `a[k] >= x`.
     # This `i` directly tells us how many elements are strictly less than `threshold_value`.
-    index = bisect.bisect_left(population_data_values, threshold_value)
+    index = bisect.bisect_left(pop_data, threshold_value)
     return index
 
 
 def gen_roc_table(roc_data, threshold_value, norm_params):
     roc_table_header = ["TP", "FN", "FP", "TN"]
-    if not roc_data or not roc_data.get("population_data"):
+    if not roc_data:
         # Return an empty figure or a figure with a message if data is not available
         return (
             [
@@ -324,8 +349,10 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
             0,
         )
 
-    i = bisect_population_w_threshold(roc_data, threshold_value)
-    num_data_points = len(roc_data["population_data"])
+    pop_data = [p[0] for p in roc_data["population_data"]]  #  if p[1] is not None]
+    i = bisect_population_w_threshold(pop_data, threshold_value)
+    pop_data = [p[0] for p in roc_data["population_data"] if p[1] is not None]
+    i_without_unknown = bisect_population_w_threshold(pop_data, threshold_value)
 
     # Determine counts of samples *below* the threshold (classified as Negative)
     # If i is 0, no points are below the threshold.
@@ -396,4 +423,6 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
         [fp_val, "False Alarm (FPR)", fpr_val, "Accuracy", acc_val],
         [tn_val, "Specificity (TNR)", tnr_val, "Z-score", z_score],
     ]
-    return roc_table, roc_table_header, i
+
+    # use only "i" to return to normal
+    return roc_table, roc_table_header, i  # _without_unknown

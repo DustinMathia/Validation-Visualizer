@@ -32,7 +32,7 @@ positive_buttons = html.Div(
                     id="pos-btn-2",
                     n_clicks=0,
                     color="primary",
-                    outline=True,
+                    outline=False,
                 ),
                 dbc.Button(
                     "Stat. Fit",
@@ -75,7 +75,7 @@ negative_buttons = html.Div(
                     id="neg-btn-2",
                     n_clicks=0,
                     color="primary",
-                    outline=True,
+                    outline=False,
                 ),
                 dbc.Button(
                     "Stat. Fit",
@@ -125,7 +125,7 @@ unknown_buttons = html.Div(
                     id="unk-btn-3",
                     n_clicks=0,
                     color="primary",
-                    outline=True,
+                    outline=False,
                 ),
             ],
             id="unk-btn-group",

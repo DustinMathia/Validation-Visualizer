@@ -123,7 +123,6 @@ app.layout = html.Div(
         dcc.Store(id="labeled-data", data={}, storage_type="memory"),
         dcc.Store(id="fit-params", data={}, storage_type="memory"),
         dcc.Store(id="roc-curves", data={}, storage_type="memory"),
-        dcc.Store(id="slider-value", data=None, storage_type="memory"),
         dcc.Store(id="range-value", data=[None, None], storage_type="memory"),
         navbar,
         alert_fail,
@@ -396,12 +395,12 @@ def reset_range_slider(selected_column, n_clicks, rangeslider_value, labeled_dat
 
 
 @callback(
-    Output("slider-value", "data"),
-    Output("slider-position", "value"),
-    Output("slider-position", "min"),
-    Output("slider-position", "max"),
+    Output("slider-position", "value", allow_duplicate=True),
+    Output("slider-position", "min", allow_duplicate=True),
+    Output("slider-position", "max", allow_duplicate=True),
     Input("range-slider", "value"),
     State("slider-position", "value"),
+    prevent_initial_call=True,
 )
 def update_threshold_slider(rangeslider_value, slider_value):
     # If the current value is outside the new range, reset it to the new min
@@ -410,7 +409,7 @@ def update_threshold_slider(rangeslider_value, slider_value):
     if slider_value >= rangeslider_value[1]:
         slider_value = rangeslider_value[1]
 
-    return slider_value, slider_value, rangeslider_value[0], rangeslider_value[1]
+    return slider_value, rangeslider_value[0], rangeslider_value[1]
 
 
 @callback(
@@ -485,6 +484,18 @@ def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves)
         #     margin=dict(l=10, r=10, t=10, b=10), width=525  # Reduce overall margins
         # )
     return roc_fig, roc_table
+
+
+@app.callback(
+    Output("slider-position", "value", allow_duplicate=True),
+    Input("roc_plot", "clickData"),
+    prevent_initial_call=True,
+)
+def set_threshold_on_click_rocplot(clickData):
+    if clickData:
+        threshold = clickData["points"][0]["customdata"]
+        return threshold
+    return no_update
 
 
 # data ag grid #
@@ -670,6 +681,22 @@ def init_statfit_select(selected_column, pos, neg, unk):
 
 
 @app.callback(
+    Output("slider-position", "value", allow_duplicate=True),
+    Input("graph", "clickData"),
+    State("range-value", "data"),
+    # State
+    prevent_initial_call=True,
+)
+def set_threshold_on_click_maingraph(clickData, range_value):
+    if clickData:
+        point_data = clickData["points"][0]
+        x_coord = point_data["x"]
+        if range_value[0] <= x_coord <= range_value[1]:
+            return x_coord
+    return no_update
+
+
+@app.callback(
     Output("graph", "figure"),
     [
         Input("pos-statfit-select", "value"),
@@ -847,7 +874,7 @@ def update_graph(
                         mode="lines",
                         name="Unknown",
                         line_color=UNKNOWN,
-                        hoverinfo="skip",
+                        hoverinfo="none",
                     ),
                     row=1,
                     col=1,
@@ -903,7 +930,7 @@ def update_graph(
                         mode="lines",
                         name="Negative",
                         line_color=NEGATIVE,
-                        hoverinfo="skip",
+                        hoverinfo="none",
                     ),
                     row=1,
                     col=1,
@@ -959,7 +986,7 @@ def update_graph(
                         mode="lines",
                         name="Positive",
                         line_color=POSITIVE,
-                        hoverinfo="skip",
+                        hoverinfo="none",
                     ),
                     row=1,
                     col=1,
@@ -971,7 +998,7 @@ def update_graph(
                 line_width=3,
                 line_dash="dashdot",
                 line_color=THRESHOLD,
-                annotation_text=slider_value,
+                annotation_text=f"{slider_value:.2f}",
                 annotation_position="top right",
                 annotation_font=dict(size=18),
                 row=1,
@@ -996,6 +1023,7 @@ def update_graph(
             showlegend=False,
             dragmode=False,
             barmode="group",
+            clickmode="event+select",
         )
 
         return fig
