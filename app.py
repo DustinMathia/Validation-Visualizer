@@ -124,6 +124,7 @@ app.layout = html.Div(
         dcc.Store(id="fit-params", data={}, storage_type="memory"),
         dcc.Store(id="roc-curves", data={}, storage_type="memory"),
         dcc.Store(id="range-value", data=[None, None], storage_type="memory"),
+        dcc.Store(id="graph-cache", data={}, storage_type="memory"),
         navbar,
         alert_fail,
         alert_warning,
@@ -697,7 +698,8 @@ def set_threshold_on_click_maingraph(clickData, range_value):
 
 
 @app.callback(
-    Output("graph", "figure"),
+    Output("graph-cache", "data"),
+    # Output("graph", "figure", allow_duplicate=True),
     [
         Input("pos-statfit-select", "value"),
         Input("neg-statfit-select", "value"),
@@ -720,7 +722,7 @@ def set_threshold_on_click_maingraph(clickData, range_value):
     ],
     prevent_initial_call=True,
 )
-def update_graph(
+def update_graph_and_cache(
     pos_fit_dist,
     neg_fit_dist,
     unknown_fit_dist,
@@ -998,19 +1000,6 @@ def update_graph(
                     col=1,
                 ),
 
-        if slider_value is not None:
-            fig.add_vline(
-                x=slider_value,
-                line_width=3,
-                line_dash="dashdot",
-                line_color=THRESHOLD,
-                annotation_text=f"{slider_value:.2f}",
-                annotation_position="top right",
-                annotation_font=dict(size=18),
-                row=1,
-                col=1,
-            )
-
         graph_yaxis_range = [0, graph_max_height * 1.1]
 
         if (
@@ -1040,6 +1029,20 @@ def update_graph(
                 bgcolor="rgba(0, 0, 0, 0)",
             )
 
+            # Comment for cache func
+            # if slider_value is not None:
+            #     fig.add_vline(
+            #         x=slider_value,
+            #         line_width=3,
+            #         line_dash="dashdot",
+            #         line_color=THRESHOLD,
+            #         annotation_text=f"{slider_value:.2f}",
+            #         annotation_position="top right",
+            #         annotation_font=dict(size=18),
+            #         row=1,
+            #         col=1,
+            #     ),
+
         fig.update_yaxes(showticklabels=False, row=2, col=1)
         fig.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
         fig.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
@@ -1059,7 +1062,34 @@ def update_graph(
             clickmode="event+select",
         )
 
-        return fig
+        return fig.to_dict()
+
+
+@callback(
+    Output("graph", "figure", allow_duplicate=True),
+    Input("slider-position", "value"),
+    State("graph-cache", "data"),
+    prevent_initial_call=True,
+)
+def load_graph_add_vline(slider_position, graph_json):
+    if not graph_json:
+        raise dash.exceptions.PreventUpdate
+
+    graph = go.Figure(graph_json)
+
+    if slider_position is not None:
+        graph.add_vline(
+            x=slider_position,
+            line_width=3,
+            line_dash="dashdot",
+            line_color=THRESHOLD,
+            annotation_text=f"{slider_position:.2f}",
+            annotation_position="top right",
+            annotation_font=dict(size=18),
+            row=1,
+            col=1,
+        ),
+    return graph
 
 
 # Init preprocessed data #
