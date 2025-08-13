@@ -5,6 +5,10 @@ import dash_ag_grid as dag  # AgGrid
 
 dash.register_page(__name__, path="/")
 
+POSITIVE = "#cd0200"
+NEGATIVE = "#446e9b"
+UNKNOWN = "#999"
+THRESHOLD = "#d47500"
 
 positive_buttons = html.Div(
     [
@@ -337,7 +341,6 @@ layout = dbc.Container(
                                                 dbc.Tab(
                                                     label="File Viewer",
                                                     children=[
-                                                        # TODO: dynamically size header minWidth
                                                         dag.AgGrid(
                                                             id="ag-grid",
                                                             className="ag-theme-balham",
@@ -387,7 +390,46 @@ layout = dbc.Container(
                                                 "width": "auto",
                                                 "maxWidth": "100%",
                                             },
-                                            #style_header={"display": "none"},
+                                            style_data_conditional=[
+                                                {
+                                                    "if": {"column_id": ["TP", "TN", "Sensitivity (TPR)", "Specificity (TNR)"]},
+                                                    "backgroundColor": "#ccffcc",
+                                                    "color": "black",
+                                                },
+                                                {
+                                                    "if": {"column_id": ["FP", "FN", "Miss Rate (FNR)", "False Alarm (FPR)"]},
+                                                    "backgroundColor": "#ffdddd",
+                                                    "color": "black",
+                                                },
+                                                {
+                                                    "if": {"column_id": "Positive Predictions"},
+                                                    "color": POSITIVE,
+                                                },
+                                                {
+                                                    "if": {"column_id": "Negative Predictions"},
+                                                    "color": NEGATIVE,
+                                                },
+                                            ],
+                                            style_header_conditional=[
+                                                {
+                                                    "if": {"column_id": ["TP", "TN", "Sensitivity (TPR)", "Specificity (TNR)"]},
+                                                    "backgroundColor": "#ccffcc",
+                                                    "color": "black",
+                                                },
+                                                {
+                                                    "if": {"column_id": ["FP", "FN", "Miss Rate (FNR)", "False Alarm (FPR)"]},
+                                                    "backgroundColor": "#ffdddd",
+                                                    "color": "black",
+                                                },
+                                                {
+                                                    "if": {"column_id": "Positive Predictions"},
+                                                    "color": POSITIVE,
+                                                },
+                                                {
+                                                    "if": {"column_id": "Negative Predictions"},
+                                                    "color": NEGATIVE,
+                                                },
+                                            ],
                                         ),
                                     ],
                                     style={"margin-top": "0px", "padding": "0px"},
