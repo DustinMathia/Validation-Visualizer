@@ -9,19 +9,6 @@ dash.register_page(__name__, path="/")
 positive_buttons = html.Div(
     [
         html.Label("Positive: ", htmlFor="pos-statfit-select"),
-        dcc.Dropdown(
-            options=[
-                {"label": "None", "value": "none"},
-                {"label": "Normal", "value": "norm"},
-                {"label": "Gompertz", "value": "gompertz"},
-                {"label": "Exponential", "value": "expon"},
-                {"label": "Expon. Norm.", "value": "exponnorm"},
-            ],
-            clearable=False,
-            placeholder="Statistical Fit",
-            id="pos-statfit-select",
-            className="mb-3",
-        ),
         dbc.ButtonGroup(
             [
                 dbc.Button(
@@ -45,16 +32,8 @@ positive_buttons = html.Div(
             id="pos-btn-group",
             class_name="btn-group-sm",
         ),
-    ],
-    className="positive-group",
-)
-
-negative_buttons = html.Div(
-    [
-        html.Label("Negative: ", htmlFor="neg-statfit-select"),
         dcc.Dropdown(
             options=[
-                {"label": "None", "value": "none"},
                 {"label": "Normal", "value": "norm"},
                 {"label": "Gompertz", "value": "gompertz"},
                 {"label": "Exponential", "value": "expon"},
@@ -62,9 +41,16 @@ negative_buttons = html.Div(
             ],
             clearable=False,
             placeholder="Statistical Fit",
-            id="neg-statfit-select",
+            id="pos-statfit-select",
             className="mb-3",
         ),
+    ],
+    className="positive-group",
+)
+
+negative_buttons = html.Div(
+    [
+        html.Label("Negative: ", htmlFor="neg-statfit-select"),
         dbc.ButtonGroup(
             [
                 dbc.Button(
@@ -88,16 +74,8 @@ negative_buttons = html.Div(
             id="neg-btn-group",
             class_name="btn-group-sm",
         ),
-    ],
-    className="negative-group",
-)
-
-unknown_buttons = html.Div(
-    [
-        html.Label("Unknown: ", htmlFor="unknown-statfit-select"),
         dcc.Dropdown(
             options=[
-                {"label": "None", "value": "none"},
                 {"label": "Normal", "value": "norm"},
                 {"label": "Gompertz", "value": "gompertz"},
                 {"label": "Exponential", "value": "expon"},
@@ -105,9 +83,16 @@ unknown_buttons = html.Div(
             ],
             clearable=False,
             placeholder="Statistical Fit",
-            id="unknown-statfit-select",
+            id="neg-statfit-select",
             className="mb-3",
         ),
+    ],
+    className="negative-group",
+)
+
+unknown_buttons = html.Div(
+    [
+        html.Label("Unknown: ", htmlFor="unknown-statfit-select"),
         dbc.ButtonGroup(
             [
                 dbc.Button(
@@ -130,6 +115,18 @@ unknown_buttons = html.Div(
             ],
             id="unk-btn-group",
             class_name="btn-group-sm",
+        ),
+        dcc.Dropdown(
+            options=[
+                {"label": "Normal", "value": "norm"},
+                {"label": "Gompertz", "value": "gompertz"},
+                {"label": "Exponential", "value": "expon"},
+                {"label": "Expon. Norm.", "value": "exponnorm"},
+            ],
+            clearable=False,
+            placeholder="Statistical Fit",
+            id="unknown-statfit-select",
+            className="mb-3",
         ),
     ],
     className="unknown-group",
@@ -275,11 +272,10 @@ layout = dbc.Container(
                 # Middle Column: Main Plot
                 dbc.Col(
                     [
-                        dbc.Tabs(
+                        dbc.Row(
                             [
-                                dbc.Tab(
-                                    label="Visualize",
-                                    children=[
+                                dbc.Col(
+                                    [
                                         dbc.Row(
                                             dcc.Graph(
                                                 id="graph",
@@ -301,85 +297,80 @@ layout = dbc.Container(
                                             class_name="g-0",
                                         ),
                                     ],
-                                ),
-                                dbc.Tab(
-                                    label="ROC 2x2 Table",
-                                    children=[
-                                        dash_table.DataTable(
-                                            id="roc-table",
-                                            columns=[],
-                                            data=[],
-                                            style_table={
-                                                "width": "100%",
-                                                "overflowX": "auto",
-                                            },
-                                            style_cell={
-                                                "whiteSpace": "normal",
-                                                "overflow": "hidden",
-                                                "textOverflow": "ellipsis",
-                                                "maxWidth": 0,
-                                                "fontSize": "12px",  # Adjust the font size as needed
-                                            },
-                                            style_header={"display": "none"},
-                                        ),
-                                        # dcc.Graph(
-                                        #     id="roc-table",
-                                        #     # style={"height": "525px", "width": "525px"},
-                                        # )  # Set height for table
+                                    width=5,
+                                    class_name="p-2 border",
+                                ),  # Adjust width, add some padding and border
+                                # Right Column: Tabs (ROC Curve, ROC Table, AG-Grid)
+                                dbc.Col(
+                                    [
+                                        dbc.Tabs(
+                                            id="right-tabs",
+                                            children=[
+                                                dbc.Tab(
+                                                    label="ROC Curve",
+                                                    children=[
+                                                        dcc.Graph(
+                                                            id="roc_plot",
+                                                            # style={"height": "525px"},
+                                                            config={
+                                                                "doubleClick": False,
+                                                                "displayModeBar": False,
+                                                            },
+                                                        )  # Set height for plot
+                                                    ],
+                                                ),
+                                                dbc.Tab(
+                                                    label="File Viewer",
+                                                    children=[
+                                                        # TODO: dynamically size header minWidth
+                                                        dag.AgGrid(
+                                                            id="ag-grid",
+                                                            className="ag-theme-balham",
+                                                            columnDefs=[],
+                                                            rowData=[],
+                                                            columnSize="autoSize",
+                                                            defaultColDef={
+                                                                "resizable": True,
+                                                                "sortable": True,
+                                                                "filter": True,
+                                                            },
+                                                            # style={
+                                                            #     "height": "525px"
+                                                            # },  # Set height for the grid
+                                                        )
+                                                    ],
+                                                ),
+                                            ],
+                                        )
                                     ],
+                                    width=5,
+                                    class_name="p-2 border",
+                                ),  # Adjust width, add some padding and border
+                            ],
+                        ),
+                        dbc.Row(
+                            [
+                                dash_table.DataTable(
+                                    id="roc-table",
+                                    columns=[],
+                                    data=[],
+                                    style_table={
+                                        "width": "100%",
+                                        "overflowX": "auto",
+                                    },
+                                    style_cell={
+                                        "whiteSpace": "normal",
+                                        "overflow": "hidden",
+                                        "textOverflow": "ellipsis",
+                                        "maxWidth": 0,
+                                        "fontSize": "12px",  # Adjust the font size as needed
+                                    },
+                                    style_header={"display": "none"},
                                 ),
                             ],
                         ),
                     ],
-                    width=5,
-                    class_name="p-2 border",
-                ),  # Adjust width, add some padding and border
-                # Right Column: Tabs (ROC Curve, ROC Table, AG-Grid)
-                dbc.Col(
-                    [
-                        dbc.Tabs(
-                            id="right-tabs",
-                            children=[
-                                dbc.Tab(
-                                    label="ROC Curve",
-                                    children=[
-                                        dcc.Graph(
-                                            id="roc_plot",
-                                            # style={"height": "525px"},
-                                            config={
-                                                "doubleClick": False,
-                                                "displayModeBar": False,
-                                            },
-                                        )  # Set height for plot
-                                    ],
-                                ),
-                                dbc.Tab(
-                                    label="File Viewer",
-                                    children=[
-                                        # TODO: dynamically size header minWidth
-                                        dag.AgGrid(
-                                            id="ag-grid",
-                                            className="ag-theme-balham",
-                                            columnDefs=[],
-                                            rowData=[],
-                                            columnSize="autoSize",
-                                            defaultColDef={
-                                                "resizable": True,
-                                                "sortable": True,
-                                                "filter": True,
-                                            },
-                                            # style={
-                                            #     "height": "525px"
-                                            # },  # Set height for the grid
-                                        )
-                                    ],
-                                ),
-                            ],
-                        )
-                    ],
-                    width=5,
-                    class_name="p-2 border",
-                ),  # Adjust width, add some padding and border
+                ),
             ],
             class_name="mb-3",
         ),

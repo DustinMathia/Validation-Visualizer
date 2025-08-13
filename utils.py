@@ -417,19 +417,50 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
     z_score = (threshold_value - mean) / std if std != 0 else float("nan")
     z_score = round(z_score, 2)
 
+    # roc_table_for_df = [
+    #     ["A", "B", "C", "D"],
+    #     ["TP", "FN", "FP", "TN"],
+    #     [tp_val, fn_val, fp_val, tn_val],
+    #     [
+    #         "Sensitivity (TPR)",
+    #         "Miss Rate (FNR)",
+    #         "False Alarm (FPR)",
+    #         "Specificity (TNR)",
+    #     ],
+    #     [tpr_val, fnr_val, fpr_val, tnr_val],
+    #     ["Unkn. as Pos.", "Unkn. as Neg.", "Accuracy", "Z-score"],
+    #     [up_val, un_val, acc_val, z_score],
+    # ]
     roc_table_for_df = [
-        ["A", "B", "C", "D"],
-        ["TP", "FN", "FP", "TN"],
-        [tp_val, fn_val, fp_val, tn_val],
+        ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"],
         [
+            "TP",
+            "FN",
+            "FP",
+            "TN",
             "Sensitivity (TPR)",
             "Miss Rate (FNR)",
             "False Alarm (FPR)",
             "Specificity (TNR)",
+            "Unkn. as Pos.",
+            "Unkn. as Neg.",
+            "Accuracy",
+            "Z-score",
         ],
-        [tpr_val, fnr_val, fpr_val, tnr_val],
-        ["Unkn. as Pos.", "Unkn. as Neg.", "Accuracy", "Z-score"],
-        [up_val, un_val, acc_val, z_score],
+        [
+            tp_val,
+            fn_val,
+            fp_val,
+            tn_val,
+            tpr_val,
+            fnr_val,
+            fpr_val,
+            tnr_val,
+            up_val,
+            un_val,
+            acc_val,
+            z_score,
+        ],
     ]
 
     df = pd.DataFrame(roc_table_for_df)
