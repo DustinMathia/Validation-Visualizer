@@ -78,6 +78,7 @@ navbar = dbc.NavbarSimple(
     color="primary",
     dark=True,
     links_left=True,
+    style={"paddingTop": "0px", "paddingBottom": "0px"},
 )
 
 alert_fail = html.Div(
@@ -700,6 +701,7 @@ def set_threshold_on_click_maingraph(clickData, range_value):
         Input("unk-btn-3", "outline"),
         Input("slider-position", "value"),
         Input("range-slider", "value"),
+        Input("p-value", "value"),
         State("labeled-data", "data"),
         State("fit-params", "data"),
         State("roc-curves", "data"),
@@ -722,6 +724,7 @@ def update_graph_and_cache(
     unk_btn3_outline,
     slider_value,
     range_value,
+    p_value,
     labeled_data,
     fitted_params,
     roc_data,
@@ -993,26 +996,27 @@ def update_graph_and_cache(
             and pos_fit_dist
             and positive_data.size > 0
         ):
-            ppf_at_value = positive_dist.ppf(0.01, **pos_params)
-            fig.add_shape(
-                type="line",
-                x0=ppf_at_value,
-                y0=0,
-                x1=ppf_at_value,
-                y1=graph_max_height,
-                line=dict(color=POSITIVE, width=1, dash="dash"),
-            )
-            fig.add_annotation(
-                x=ppf_at_value,
-                y=graph_max_height,
-                xref="x",
-                yref="y",
-                text="p=0.01",
-                showarrow=False,
-                yanchor="bottom",
-                font=dict(size=10, color=POSITIVE),
-                bgcolor="rgba(0, 0, 0, 0)",
-            )
+            if p_value:
+                ppf_at_value = positive_dist.ppf(0.01, **pos_params)
+                fig.add_shape(
+                    type="line",
+                    x0=ppf_at_value,
+                    y0=0,
+                    x1=ppf_at_value,
+                    y1=graph_max_height,
+                    line=dict(color=POSITIVE, width=1, dash="dash"),
+                )
+                fig.add_annotation(
+                    x=ppf_at_value,
+                    y=graph_max_height,
+                    xref="x",
+                    yref="y",
+                    text="p=0.01",
+                    showarrow=False,
+                    yanchor="bottom",
+                    font=dict(size=10, color=POSITIVE),
+                    bgcolor="rgba(0, 0, 0, 0)",
+                )
 
             # Comment for cache func
             if slider_value is not None:

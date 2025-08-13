@@ -12,20 +12,20 @@ positive_buttons = html.Div(
         dbc.ButtonGroup(
             [
                 dbc.Button(
-                    "Rug", id="pos-btn-1", n_clicks=0, color="primary", outline=False
+                    "Rug", id="pos-btn-1", n_clicks=0, color="danger", outline=False
                 ),
                 dbc.Button(
                     "Hist.",
                     id="pos-btn-2",
                     n_clicks=0,
-                    color="primary",
+                    color="danger",
                     outline=False,
                 ),
                 dbc.Button(
                     "Stat. Fit",
                     id="pos-btn-3",
                     n_clicks=0,
-                    color="primary",
+                    color="danger",
                     outline=False,
                 ),
             ],
@@ -99,17 +99,17 @@ unknown_buttons = html.Div(
                     "Rug",
                     id="unk-btn-1",
                     n_clicks=0,
-                    color="primary",
+                    color="secondary",
                     outline=False,
                 ),
                 dbc.Button(
-                    "Hist.", id="unk-btn-2", n_clicks=0, color="primary", outline=False
+                    "Hist.", id="unk-btn-2", n_clicks=0, color="secondary", outline=False
                 ),
                 dbc.Button(
                     "Stat. Fit",
                     id="unk-btn-3",
                     n_clicks=0,
-                    color="primary",
+                    color="secondary",
                     outline=False,
                 ),
             ],
@@ -182,6 +182,7 @@ range_slider = html.Div(
                         class_name="bi bi-arrow-clockwise py-0 px-1",
                     ),
                     width="auto",
+                    style={"align-self": "start"},
                 ),  # Add Bootstrap margin-end
                 dbc.Col(
                     dcc.RangeSlider(
@@ -194,6 +195,7 @@ range_slider = html.Div(
                         #            className="mb-3",  # Add margin-bottom
                     ),
                     width=True,
+                    style={"padding": "0px"},
                 ),
             ],
             align="center",
@@ -263,8 +265,21 @@ layout = dbc.Container(
                                     ],
                                     className="p-2 border",
                                 ),
-                            ]
-                        )
+                                html.Div(
+                                    [
+                                        dbc.Checklist(
+                                            options=[
+                                                {"label": "p=0.01", "value": 1},
+                                            ],
+                                            value=[],
+                                            id="p-value",
+                                            switch=True,
+                                        ),
+                                    ],
+                                    className="mt-3",
+                                ),
+                            ],
+                        ),
                     ],
                     width=2,
                     class_name="p-2 border dropdown-col",
@@ -297,7 +312,7 @@ layout = dbc.Container(
                                             class_name="g-0",
                                         ),
                                     ],
-                                    width=5,
+                                    width=6,
                                     class_name="p-2 border",
                                 ),  # Adjust width, add some padding and border
                                 # Right Column: Tabs (ROC Curve, ROC Table, AG-Grid)
@@ -343,33 +358,46 @@ layout = dbc.Container(
                                             ],
                                         )
                                     ],
-                                    width=5,
+                                    width=6,
                                     class_name="p-2 border",
                                 ),  # Adjust width, add some padding and border
                             ],
+                            style={"marginBottom": "0"},
                         ),
                         dbc.Row(
                             [
-                                dash_table.DataTable(
-                                    id="roc-table",
-                                    columns=[],
-                                    data=[],
-                                    style_table={
-                                        "width": "100%",
-                                        "overflowX": "auto",
-                                    },
-                                    style_cell={
-                                        "whiteSpace": "normal",
-                                        "overflow": "hidden",
-                                        "textOverflow": "ellipsis",
-                                        "maxWidth": 0,
-                                        "fontSize": "12px",  # Adjust the font size as needed
-                                    },
-                                    style_header={"display": "none"},
+                                html.Div(
+                                    [
+                                        dash_table.DataTable(
+                                            id="roc-table",
+                                            columns=[],
+                                            data=[],
+                                            style_table={
+                                                #   "border": "1px solid black",  # Example: 1px solid black border
+                                                "width": "100%",  # Ensures the table fills the width of its parent container
+                                                "height": "100%",  # Ensures the table fills the height of its parent container
+                                                "overflowX": "auto",
+                                            },
+                                            style_cell={
+                                                "whiteSpace": "normal",
+                                                "overflow": "hidden",
+                                                "textOverflow": "ellipsis",
+                                                "fontSize": "12px",  # Adjust the font size as needed
+                                                "minWidth": "0px",
+                                                "width": "auto",
+                                                "maxWidth": "100%",
+                                            },
+                                            #style_header={"display": "none"},
+                                        ),
+                                    ],
+                                    style={"margin-top": "0px", "padding": "0px"},
                                 ),
                             ],
+                            style={"marginTop": "0"},
+                            class_name="p-2 border",
                         ),
                     ],
+                    style={"marginBottom": "0"},
                 ),
             ],
             class_name="mb-3",

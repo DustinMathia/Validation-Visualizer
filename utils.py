@@ -432,7 +432,6 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
     #     [up_val, un_val, acc_val, z_score],
     # ]
     roc_table_for_df = [
-        ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"],
         [
             "TP",
             "FN",
@@ -442,8 +441,8 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
             "Miss Rate (FNR)",
             "False Alarm (FPR)",
             "Specificity (TNR)",
-            "Unkn. as Pos.",
-            "Unkn. as Neg.",
+            "Positive Predictions",
+            "Negative Predictions",
             "Accuracy",
             "Z-score",
         ],
