@@ -69,7 +69,7 @@ navbar = dbc.NavbarSimple(
     brand=html.A(
         dbc.Row(
             [
-                dbc.Col(html.Img(src="/assets/100x100.svg", height="30px")),
+                dbc.Col(html.Img(src="/assets/logo-white-validation-visualizer.png", height="30px")),
             ],
             align="center",
             class_name="g-0",
