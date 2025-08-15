@@ -69,7 +69,12 @@ navbar = dbc.NavbarSimple(
     brand=html.A(
         dbc.Row(
             [
-                dbc.Col(html.Img(src="/assets/logo-white-validation-visualizer.png", height="30px")),
+                dbc.Col(
+                    html.Img(
+                        src="/assets/logo-white-validation-visualizer.png",
+                        height="30px",
+                    )
+                ),
             ],
             align="center",
             class_name="g-0",
@@ -414,12 +419,12 @@ def update_threshold_slider(rangeslider_value, slider_value):
     return slider_value, rangeslider_value[0], rangeslider_value[1]
 
 
-@callback(
-    Output("threshold-slider-label", "children"),
-    Input("column-select", "value"),
-)
-def update_threshold_slider_label(selected_column):
-    return selected_column
+# @callback(
+#     Output("threshold-slider-label", "children"),
+#     Input("column-select", "value"),
+# )
+# def update_threshold_slider_label(selected_column):
+#     return selected_column
 
 
 # roc figures #
@@ -702,6 +707,7 @@ def set_threshold_on_click_maingraph(clickData, range_value):
         Input("slider-position", "value"),
         Input("range-slider", "value"),
         Input("p-value", "value"),
+        Input("p-value-input", "value"),
         State("labeled-data", "data"),
         State("fit-params", "data"),
         State("roc-curves", "data"),
@@ -725,6 +731,7 @@ def update_graph_and_cache(
     slider_value,
     range_value,
     p_value,
+    p_value_input,
     labeled_data,
     fitted_params,
     roc_data,
@@ -997,7 +1004,7 @@ def update_graph_and_cache(
             and positive_data.size > 0
         ):
             if p_value:
-                ppf_at_value = positive_dist.ppf(0.01, **pos_params)
+                ppf_at_value = positive_dist.ppf(float(p_value_input), **pos_params)
                 fig.add_shape(
                     type="line",
                     x0=ppf_at_value,
@@ -1011,7 +1018,7 @@ def update_graph_and_cache(
                     y=graph_max_height,
                     xref="x",
                     yref="y",
-                    text="p=0.01",
+                    text="p=" + str(p_value_input),
                     showarrow=False,
                     yanchor="bottom",
                     font=dict(size=10, color=POSITIVE),
@@ -1113,4 +1120,4 @@ def load_data(dummy):
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)

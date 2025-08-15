@@ -26,7 +26,7 @@ positive_buttons = html.Div(
                     outline=False,
                 ),
                 dbc.Button(
-                    "Stat. Fit",
+                    "Stat. Fit ↴",
                     id="pos-btn-3",
                     n_clicks=0,
                     color="danger",
@@ -68,7 +68,7 @@ negative_buttons = html.Div(
                     outline=False,
                 ),
                 dbc.Button(
-                    "Stat. Fit",
+                    "Stat. Fit ↴",
                     id="neg-btn-3",
                     n_clicks=0,
                     color="primary",
@@ -107,10 +107,14 @@ unknown_buttons = html.Div(
                     outline=False,
                 ),
                 dbc.Button(
-                    "Hist.", id="unk-btn-2", n_clicks=0, color="secondary", outline=False
+                    "Hist.",
+                    id="unk-btn-2",
+                    n_clicks=0,
+                    color="secondary",
+                    outline=False,
                 ),
                 dbc.Button(
-                    "Stat. Fit",
+                    "Stat. Fit ↴",
                     id="unk-btn-3",
                     n_clicks=0,
                     color="secondary",
@@ -140,6 +144,19 @@ threshold_slider = html.Div(
     [
         dbc.Row(
             [
+                html.Div(
+                    "Positive Threshold",
+                    id="threshold-slider-label",
+                    style={
+                        "textAlign": "center",
+                        "padding": "0px",
+                        "marginBottom": "5px",
+                    },
+                ),
+            ]
+        ),
+        dbc.Row(
+            [
                 dcc.Slider(
                     id="slider-position",
                     min=0,
@@ -157,19 +174,6 @@ threshold_slider = html.Div(
                 ),
             ],
             align="center",
-        ),
-        dbc.Row(
-            [
-                html.Div(
-                    "text",
-                    id="threshold-slider-label",
-                    style={
-                        "textAlign": "center",
-                        "padding": "0px",
-                        "marginTop": "-5px",
-                    },
-                ),
-            ]
         ),
     ],
     className="p-2 border",
@@ -271,16 +275,31 @@ layout = dbc.Container(
                                 ),
                                 html.Div(
                                     [
-                                        dbc.Checklist(
-                                            options=[
-                                                {"label": "p=0.01", "value": 1},
+                                        dbc.Row(
+                                            [
+                                                dbc.Col(
+                                                    dbc.Checklist(
+                                                        options=[
+                                                            {"label": "p=", "value": 1},
+                                                        ],
+                                                        value=[],
+                                                        id="p-value",
+                                                        switch=True,
+                                                    ),
+                                                    width=4,
+                                                ),
+                                                dbc.Col(
+                                                    dbc.Input(
+                                                        id="p-value-input", value="0.01", type="number", max=1, min=0.00, step=0.01,
+                                                        style={"width": 80},
+                                                    ),
+                                                    width="auto",
+                                                ),
                                             ],
-                                            value=[],
-                                            id="p-value",
-                                            switch=True,
+                                            align="center",
+                                            className="g-2",
                                         ),
                                     ],
-                                    className="mt-3",
                                 ),
                             ],
                         ),
@@ -392,42 +411,78 @@ layout = dbc.Container(
                                             },
                                             style_data_conditional=[
                                                 {
-                                                    "if": {"column_id": ["TP", "TN", "Sensitivity (TPR)", "Specificity (TNR)"]},
+                                                    "if": {
+                                                        "column_id": [
+                                                            "TP",
+                                                            "TN",
+                                                            "Sensitivity (TPR)",
+                                                            "Specificity (TNR)",
+                                                        ]
+                                                    },
                                                     "backgroundColor": "#ccffcc",
                                                     "color": "black",
                                                 },
                                                 {
-                                                    "if": {"column_id": ["FP", "FN", "Miss Rate (FNR)", "False Alarm (FPR)"]},
+                                                    "if": {
+                                                        "column_id": [
+                                                            "FP",
+                                                            "FN",
+                                                            "Miss Rate (FNR)",
+                                                            "False Alarm (FPR)",
+                                                        ]
+                                                    },
                                                     "backgroundColor": "#ffdddd",
                                                     "color": "black",
                                                 },
                                                 {
-                                                    "if": {"column_id": "Positive Predictions"},
+                                                    "if": {
+                                                        "column_id": "Positive Predictions"
+                                                    },
                                                     "color": POSITIVE,
                                                 },
                                                 {
-                                                    "if": {"column_id": "Negative Predictions"},
+                                                    "if": {
+                                                        "column_id": "Negative Predictions"
+                                                    },
                                                     "color": NEGATIVE,
                                                 },
                                             ],
                                             style_header_conditional=[
                                                 {
-                                                    "if": {"column_id": ["TP", "TN", "Sensitivity (TPR)", "Specificity (TNR)"]},
-                                                    "backgroundColor": "#ccffcc",
+                                                    "if": {
+                                                        "column_id": [
+                                                            "TP",
+                                                            "TN",
+                                                            "Sensitivity (TPR)",
+                                                            "Specificity (TNR)",
+                                                        ]
+                                                    },
+                                                    "backgroundColor": "#b5e6b5",
                                                     "color": "black",
                                                 },
                                                 {
-                                                    "if": {"column_id": ["FP", "FN", "Miss Rate (FNR)", "False Alarm (FPR)"]},
-                                                    "backgroundColor": "#ffdddd",
+                                                    "if": {
+                                                        "column_id": [
+                                                            "FP",
+                                                            "FN",
+                                                            "Miss Rate (FNR)",
+                                                            "False Alarm (FPR)",
+                                                        ]
+                                                    },
+                                                    "backgroundColor": "#e9c1c1",
                                                     "color": "black",
                                                 },
                                                 {
-                                                    "if": {"column_id": "Positive Predictions"},
-                                                    "color": POSITIVE,
+                                                    "if": {
+                                                        "column_id": "Positive Predictions"
+                                                    },
+                                                    "color": "#892e2d",
                                                 },
                                                 {
-                                                    "if": {"column_id": "Negative Predictions"},
-                                                    "color": NEGATIVE,
+                                                    "if": {
+                                                        "column_id": "Negative Predictions"
+                                                    },
+                                                    "color": "#316296",
                                                 },
                                             ],
                                         ),
