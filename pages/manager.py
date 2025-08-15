@@ -18,6 +18,7 @@ from dash import (
 import pandas as pd
 import json
 import os
+import shutil
 
 
 SAVED_FILE_NAMES = {
@@ -181,7 +182,7 @@ def button_manager(button_data, row_data, processed_files):
             out_download = dcc.send_data_frame(df.to_excel, filename, sheet_name="Sheet1")
         case "delete":
             processed_files.remove(filename)
-            os.remove(filepath)
+            shutil.rmtree(os.path.join(DATA_FOLDER, filename))
 
     return out_columnDefs, out_rowData, out_download, processed_files
 

@@ -165,15 +165,13 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
                 errors.append(f"Error decoding Base64 string of file {filename}: {e}")
 
             try:
-                if filename.endswith(".xlsx"):
-                    df_file = pd.read_excel(io.BytesIO(decoded))
-                elif filename.endswith(".txt"):
+                if filename.endswith(".tsv"):
                     df_file = pd.read_csv(
                         io.StringIO(decoded.decode("utf-8")), sep="\t"
                     )
                 else:
                     errors.append(
-                        f"The filetype of {filename} is incorrect. Please upload an XLSX file."
+                        f"The filetype of {filename} is incorrect. Please upload a .tsv file."
                     )
                     continue
 
@@ -272,9 +270,7 @@ def data_processing(uploaded_files_list, processed_files_list):
                 file_dir = os.path.join("data", filename)
                 raw_file_path = os.path.join(file_dir, filename)
 
-                if filename.endswith(".xlsx"):
-                    df = pd.read_excel(raw_file_path)
-                elif filename.endswith(".txt"):
+                if filename.endswith(".tsv"):
                     df = pd.read_csv(raw_file_path, sep="\t")
 
                 labeled_data = utils.label_data(df)
@@ -310,6 +306,11 @@ def data_processing(uploaded_files_list, processed_files_list):
 
             except Exception as e:
                 errors.append(f"Error processing file {filename}: {e}")
+                if os.path.exists(filename):
+                    try:
+                        shutil.rmtree(filename)
+                    except OSError as e:
+                        errors.append(f"Error: {filename} - {e.strerror}.")
 
     # Logic for alerts
     fail_is_open = len(errors) > 0
