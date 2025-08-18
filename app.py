@@ -177,7 +177,7 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
 
                 # Check for required Column
                 if "reference_result" not in df_file.columns:
-                    warnings.append(f"No Column 'reference_result' in {filename}")
+                    warnings.append(f"Warning: No Column 'reference_result' in {filename}")
                 else:
                     if (
                         not df_file["reference_result"]
@@ -1026,19 +1026,21 @@ def update_graph_and_cache(
                     bgcolor="rgba(0, 0, 0, 0)",
                 )
 
-            # Comment for cache func
-            if slider_value is not None:
-                fig.add_vline(
-                    x=slider_value,
-                    line_width=3,
-                    line_dash="dashdot",
-                    line_color=THRESHOLD,
-                    annotation_text=f"{slider_value:.2f}",
-                    annotation_position="top right",
-                    annotation_font=dict(size=18),
-                    row=1,
-                    col=1,
-                ),
+        # Comment for cache func
+        if (slider_value is not None
+            and pos_fit_dist != "none"
+            and pos_fit_dist):
+            fig.add_vline(
+                x=slider_value,
+                line_width=3,
+                line_dash="dashdot",
+                line_color=THRESHOLD,
+                annotation_text=f"{slider_value:.2f}",
+                annotation_position="top right",
+                annotation_font=dict(size=18),
+                row=1,
+                col=1,
+            ),
 
         fig.update_yaxes(showticklabels=False, row=2, col=1)
         fig.update_xaxes(range=[range_value[0], range_value[1]], showticklabels=True, ticks="inside", nticks=10, row=1, col=1)
