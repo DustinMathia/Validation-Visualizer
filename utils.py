@@ -304,28 +304,29 @@ def plot_roc_curve(roc_data, threshold_index):
     if FPR_plot and TPR_plot:  # Ensure lists are not empty
         fig.add_trace(
             go.Scatter(
-                x=FPR_plot,
-                y=TPR_plot,
+                # i mixed up the fpr tpr naming dont fix its correct
+                y=FPR_plot,
+                x=TPR_plot,
                 mode="lines",
                 line_shape="hv",
                 name="ROC Curve",
                 customdata=threshold_plot,
                 hovertemplate="Threshold: <b>%{customdata:.2f}</b><br>"
-                + "Sensitivity (FPR): %{y:.2f}<br>"
-                + "Specificity (TPR): %{x:.2f}",
+                + "Sensitivity (TPR): %{y:.2f}<br>"
+                + "Specificity (FPR): %{x:.2f}",
             )
         )
         fig.add_trace(
             go.Scatter(
-                x=[thresh_pt_x],
-                y=[thresh_pt_y],
+                y=[thresh_pt_x],
+                x=[thresh_pt_y],
                 mode="markers",
                 marker=dict(color=THRESHOLD, size=15, symbol="circle"),
                 name="Threshold Point",
                 customdata=[threshold],
                 hovertemplate="Threshold: <b>%{customdata:.2f}</b><br>"
-                + "Sensitivity (FPR): %{y:.2f}<br>"
-                + "Specificity (TPR): %{x:.2f}",
+                + "Sensitivity (TPR): %{y:.2f}<br>"
+                + "Specificity (FPR): %{x:.2f}",
             )
         )
     return fig
@@ -457,8 +458,8 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
             tn_val,
             fn_val,
             fp_val,
+            tnr_val, # again, tnr and tpr were switched
             tpr_val,
-            tnr_val,
             up_val,
             un_val,
             acc_val,
