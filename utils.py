@@ -280,9 +280,6 @@ def plot_roc_curve(roc_data, threshold_index):
     FPR_plot.append(1)
     threshold_plot.append(population_data[-1][0])
 
-    # TPR_plot.reverse()
-    # FPR_plot.reverse()
-
     thresh_pt_x = 0
     thresh_pt_y = 0
 
@@ -304,7 +301,6 @@ def plot_roc_curve(roc_data, threshold_index):
     if FPR_plot and TPR_plot:  # Ensure lists are not empty
         fig.add_trace(
             go.Scatter(
-                # i mixed up the fpr tpr naming dont fix its correct
                 x=FPR_plot,
                 y=TPR_plot,
                 mode="lines",

@@ -86,6 +86,8 @@ File must have a "reference\_result" column and at least one numerical column.
 
 ### Ways to set threshold value
 
+Tip: After clicking a slider, you can use your arrow keys to move one tick at a time
+
 <br />
 
 <div id='slider'/>
