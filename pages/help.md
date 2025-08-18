@@ -8,6 +8,7 @@
 2. [Setting Threshold](#threshold)
     1. [Using Slider](#slider)
     2. [Using ROC Plot](#click)
+    3. [Using main plot](#click2)
 3. [Reference Charts](#reference)
 
 <div id='datamanager'/>
@@ -108,6 +109,7 @@ File must have a "reference\_result" column and at least one numerical column.
 
 <br />
 
+<div id='click2'/>
 
 #### Click on any rug, histogram, or statistical fit line point
 
@@ -117,8 +119,9 @@ File must have a "reference\_result" column and at least one numerical column.
 
 <br />
 
+---
 
-<div id='referencce'/>
+<div id='reference'/>
 
 ### Reference charts for statistics concepts
 
