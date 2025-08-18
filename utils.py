@@ -256,7 +256,7 @@ def plot_roc_curve(roc_data, threshold_index):
     acc_neg = roc_data["accumulated_negative_at_value"]
 
     TPR_plot = [1]
-    FPR_plot = [1]
+    FPR_plot = [0]
     threshold_plot = [population_data[0][0]]
 
     if total_positive == 0 and total_negative == 0:
@@ -270,15 +270,18 @@ def plot_roc_curve(roc_data, threshold_index):
         fp_at_k = total_negative - negatives_less_than_current_value
 
         tpr_at_k = tp_at_k / total_positive if total_positive > 0 else 0
-        fpr_at_k = fp_at_k / total_negative if total_negative > 0 else 0
+        fpr_at_k = 1 - (fp_at_k / total_negative) if total_negative > 0 else 0
 
         TPR_plot.append(tpr_at_k)
         FPR_plot.append(fpr_at_k)
         threshold_plot.append(pop[0])
 
     TPR_plot.append(0)
-    FPR_plot.append(0)
+    FPR_plot.append(1)
     threshold_plot.append(population_data[-1][0])
+
+    # TPR_plot.reverse()
+    # FPR_plot.reverse()
 
     thresh_pt_x = 0
     thresh_pt_y = 0
@@ -286,10 +289,10 @@ def plot_roc_curve(roc_data, threshold_index):
     if total_positive == 0 and total_negative == 0:
         pass
     elif threshold_index == len(population_data):
-        thresh_pt_x = 0
+        thresh_pt_x = 1
         thresh_pt_y = 0
     elif threshold_index == 0:
-        thresh_pt_x = 1
+        thresh_pt_x = 0
         thresh_pt_y = 1
     else:
         thresh_pt_x = FPR_plot[threshold_index + 1]
@@ -309,7 +312,7 @@ def plot_roc_curve(roc_data, threshold_index):
                 customdata=threshold_plot,
                 hovertemplate="Threshold: <b>%{customdata:.2f}</b><br>"
                 + "Sensitivity (FPR): %{y:.2f}<br>"
-                + "1 - Specificity (TPR): %{x:.2f}",
+                + "Specificity (TPR): %{x:.2f}",
             )
         )
         fig.add_trace(
@@ -322,7 +325,7 @@ def plot_roc_curve(roc_data, threshold_index):
                 customdata=[threshold],
                 hovertemplate="Threshold: <b>%{customdata:.2f}</b><br>"
                 + "Sensitivity (FPR): %{y:.2f}<br>"
-                + "1 - Specificity (TPR): %{x:.2f}",
+                + "Specificity (TPR): %{x:.2f}",
             )
         )
     return fig
@@ -416,6 +419,10 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
     std = norm_params["scale"]
     z_score = (threshold_value - mean) / std if std != 0 else float("nan")
     z_score = round(z_score, 2)
+    try:
+        ppv = tp_val / (tp_val + fp_val)
+    except ZeroDivisionError:
+        ppv = float('nan')
 
     # roc_table_for_df = [
     #     ["A", "B", "C", "D"],
@@ -439,11 +446,10 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
             "FP",
             "Sensitivity (TPR)",
             "Specificity (TNR)",
-            "Miss Rate (FNR)",
-            "False Alarm (FPR)",
             "Positive Predictions",
             "Negative Predictions",
             "Accuracy",
+            "PPV",
             "Z-score",
         ],
         [
@@ -453,11 +459,10 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
             fp_val,
             tpr_val,
             tnr_val,
-            fnr_val,
-            fpr_val,
             up_val,
             un_val,
             acc_val,
+            round(ppv, 2),
             z_score,
         ],
     ]

@@ -145,7 +145,7 @@ threshold_slider = html.Div(
         dbc.Row(
             [
                 html.Div(
-                    "Positive Threshold",
+                    "Threshold beyond which Positive",
                     id="threshold-slider-label",
                     style={
                         "textAlign": "center",

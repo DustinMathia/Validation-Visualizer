@@ -20,4 +20,4 @@ try:
 except FileNotFoundError:
     readme_content = "README.md not found."
 
-layout = html.Div([dcc.Markdown(children=readme_content)])
+layout = html.Div([dcc.Markdown(children=readme_content, dangerously_allow_html=True)])

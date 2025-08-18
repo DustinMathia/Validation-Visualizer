@@ -470,7 +470,7 @@ def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves)
         roc_fig = utils.plot_roc_curve(roc_column, roc_index)
         roc_fig.update_layout(
             showlegend=False,
-            xaxis=dict(range=[-0.05, 1.05], title="1 - Specificty (TPR)"),
+            xaxis=dict(range=[1.05, -0.05], title="Specificty (TPR)"),
             yaxis=dict(range=[-0.05, 1.05], title="Sensitivity (FPR)"),
         )
         # roc_table.update_layout(
@@ -1041,7 +1041,7 @@ def update_graph_and_cache(
                 ),
 
         fig.update_yaxes(showticklabels=False, row=2, col=1)
-        fig.update_xaxes(range=[range_value[0], range_value[1]], row=1, col=1)
+        fig.update_xaxes(range=[range_value[0], range_value[1]], showticklabels=True, ticks="inside", nticks=10, row=1, col=1)
         fig.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
         fig.update_layout(
             margin=dict(l=20, r=20, t=0, b=0),
@@ -1121,4 +1121,4 @@ def load_data(dummy):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
