@@ -177,6 +177,15 @@ def make_roc_curve(labeled_data):
         negative_data = data["negative"]["data"]
         unknown_data = data["unknown"]["data"]
 
+        pos_median = np.median(positive_data)
+        neg_median = np.median(negative_data)
+        mirrored = pos_median <= neg_median
+
+        # if mirrored:
+        #     positive_data = -positive_data
+        #     negative_data = -negative_data
+        #     unknown_data = -unknown_data
+
         total_positive = len(positive_data)
         total_negative = len(negative_data)
         total_unknown = len(unknown_data)
@@ -190,6 +199,7 @@ def make_roc_curve(labeled_data):
                 "accumulated_positive_at_value": [],
                 "accumulated_negative_at_value": [],
                 "accumulated_unknown_at_value": [],
+                "mirrored": False,
             }
             continue
 
@@ -231,6 +241,7 @@ def make_roc_curve(labeled_data):
             "accumulated_positive_at_value": accumulated_positive_at_value,
             "accumulated_negative_at_value": accumulated_negative_at_value,
             "accumulated_unknown_at_value": accumulated_unknown_at_value,
+            "mirrored": mirrored,
         }
     return roc_curves
 
@@ -254,6 +265,8 @@ def plot_roc_curve(roc_data, threshold_index):
     total_negative = roc_data["total_negative"]
     acc_pos = roc_data["accumulated_positive_at_value"]
     acc_neg = roc_data["accumulated_negative_at_value"]
+    mirrored = roc_data["mirrored"]
+
 
     TPR_plot = [1]
     FPR_plot = [0]
@@ -278,24 +291,56 @@ def plot_roc_curve(roc_data, threshold_index):
 
     TPR_plot.append(0)
     FPR_plot.append(1)
-    threshold_plot.append(population_data[-1][0])
 
-    thresh_pt_x = 0
-    thresh_pt_y = 0
+    if mirrored:
+        _mirrored_TPR_plot = [1-p for p in TPR_plot]
+        _mirrored_FPR_plot = [1-p for p in FPR_plot]
+        TPR_plot = _mirrored_TPR_plot
+        FPR_plot = _mirrored_FPR_plot
 
-    if total_positive == 0 and total_negative == 0:
-        pass
-    elif threshold_index == len(population_data):
-        thresh_pt_x = 1
-        thresh_pt_y = 0
-    elif threshold_index == 0:
+        threshold_plot.append(population_data[-1][0])
+        #threshold_plot.reverse()
+        #population_data.reverse()
+
         thresh_pt_x = 0
-        thresh_pt_y = 1
-    else:
-        thresh_pt_x = FPR_plot[threshold_index + 1]
-        thresh_pt_y = TPR_plot[threshold_index + 1]
+        thresh_pt_y = 0
 
-    threshold = population_data[threshold_index][0]
+        if total_positive == 0 and total_negative == 0:
+            pass
+        elif threshold_index == len(population_data):
+            thresh_pt_x = 0
+            thresh_pt_y = 1
+        elif threshold_index == 0:
+            thresh_pt_x = 1
+            thresh_pt_y = 0
+        else:
+            thresh_pt_x = FPR_plot[threshold_index + 0]
+            thresh_pt_y = TPR_plot[threshold_index + 0]
+
+        threshold = population_data[threshold_index][0]
+
+
+    else:
+        threshold_plot.append(population_data[-1][0])
+
+        thresh_pt_x = 0
+        thresh_pt_y = 0
+
+        if total_positive == 0 and total_negative == 0:
+            pass
+        elif threshold_index == len(population_data):
+            thresh_pt_x = 1
+            thresh_pt_y = 0
+        elif threshold_index == 0:
+            thresh_pt_x = 0
+            thresh_pt_y = 1
+        else:
+            thresh_pt_x = FPR_plot[threshold_index + 1]
+            thresh_pt_y = TPR_plot[threshold_index + 1]
+
+        threshold = population_data[threshold_index][0]
+
+    # export x vs y as dataframe
 
     fig = go.Figure()
     if FPR_plot and TPR_plot:  # Ensure lists are not empty
@@ -328,32 +373,38 @@ def plot_roc_curve(roc_data, threshold_index):
     return fig
 
 
-def bisect_population_w_threshold(pop_data, threshold_value):
+def bisect_population_w_threshold(pop_data, threshold_value, mirrored):
     # bisect_left returns an insertion point `i` such that all `a[k]` for `k < i` have `a[k] < x`.
     # And all `a[k]` for `k >= i` have `a[k] >= x`.
     # This `i` directly tells us how many elements are strictly less than `threshold_value`.
-    index = bisect.bisect_left(pop_data, threshold_value)
+    if mirrored:
+        index = bisect.bisect_right(pop_data, threshold_value) #idk but it works so
+    else:
+        index = bisect.bisect_left(pop_data, threshold_value)
     return index
 
-
 def gen_roc_table(roc_data, threshold_value, norm_params):
-    roc_table_header = ["TP", "FN", "FP", "TN"]
     if not roc_data:
         # Return an empty figure or a figure with a message if data is not available
-        return (
-            [
-                [None, None, None, None],
-                [None, None, None, None],
-                [None, None, None, None],
-            ],
-            roc_table_header,
-            0,
-        )
+        return None
 
-    pop_data = [p[0] for p in roc_data["population_data"]]  #  if p[1] is not None]
-    i = bisect_population_w_threshold(pop_data, threshold_value)
-    pop_data = [p[0] for p in roc_data["population_data"] if p[1] is not None]
-    i_without_unknown = bisect_population_w_threshold(pop_data, threshold_value)
+    population_data = roc_data["population_data"]
+    accumulated_positive_at_value = roc_data["accumulated_positive_at_value"]
+    accumulated_negative_at_value = roc_data["accumulated_negative_at_value"]
+    accumulated_unknown_at_value = roc_data["accumulated_unknown_at_value"]
+    mirrored = roc_data["mirrored"]
+
+
+    pop_data = [p[0] for p in population_data]  #  if p[1] is not None]
+    i = bisect_population_w_threshold(pop_data, threshold_value, mirrored)
+    pop_data = [p[0] for p in population_data if p[1] is not None]
+    i_without_unknown = bisect_population_w_threshold(pop_data, threshold_value, mirrored)
+
+    # if mirrored:
+    #     # population_data.reverse()
+    #     accumulated_positive_at_value.reverse()
+    #     accumulated_negative_at_value.reverse()
+    #     accumulated_unknown_at_value.reverse()
 
     # Determine counts of samples *below* the threshold (classified as Negative)
     # If i is 0, no points are below the threshold.
@@ -363,9 +414,9 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
         tn_val = 0
         un_val = 0
     else:
-        fn_val = roc_data["accumulated_positive_at_value"][i - 1]
-        tn_val = roc_data["accumulated_negative_at_value"][i - 1]
-        un_val = roc_data["accumulated_unknown_at_value"][i - 1]
+        fn_val = accumulated_positive_at_value[i - 1]
+        tn_val = accumulated_negative_at_value[i - 1]
+        un_val = accumulated_unknown_at_value[i - 1]
 
     # Determine counts of samples *at or above* the threshold (classified as Positive)
     tp_val = (
@@ -421,20 +472,6 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
     except ZeroDivisionError:
         ppv = float('nan')
 
-    # roc_table_for_df = [
-    #     ["A", "B", "C", "D"],
-    #     ["TP", "FN", "FP", "TN"],
-    #     [tp_val, fn_val, fp_val, tn_val],
-    #     [
-    #         "Sensitivity (TPR)",
-    #         "Miss Rate (FNR)",
-    #         "False Alarm (FPR)",
-    #         "Specificity (TNR)",
-    #     ],
-    #     [tpr_val, fnr_val, fpr_val, tnr_val],
-    #     ["Unkn. as Pos.", "Unkn. as Neg.", "Accuracy", "Z-score"],
-    #     [up_val, un_val, acc_val, z_score],
-    # ]
     roc_table_for_df = [
         [
             "TP",
