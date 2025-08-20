@@ -469,15 +469,16 @@ def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves)
         ROCDataTable_data, ROCDataTable_columns, roc_index = utils.gen_roc_table(
             roc_column, pos_x, fitted_params[selected_column]["positive"]["norm"]
         )
-        roc_fig, df_roc = utils.plot_roc_curve(roc_column, roc_index, False)
+        roc_fig, df_roc, mirrored = utils.plot_roc_curve(roc_column, roc_index, False)
         roc_fig.update_layout(
             showlegend=False,
             xaxis=dict(range=[1.05, -0.05], title="Specificty (TNR)"),
             yaxis=dict(range=[-0.05, 1.05], title="Sensitivity (TPR)"),
         )
-        # roc_table.update_layout(
-        #     margin=dict(l=10, r=10, t=10, b=10), width=525  # Reduce overall margins
-        # )
+        roc_fig.update_layout(
+            # margin=dict(l=10, r=10, t=10, b=10), width=525  # Reduce overall margins
+            dragmode=False,
+        )
     return roc_fig, ROCDataTable_data, ROCDataTable_columns
 
 

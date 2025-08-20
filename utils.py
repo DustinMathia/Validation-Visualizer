@@ -370,8 +370,8 @@ def plot_roc_curve(roc_data, threshold_index, cli):
         )
         df = None
         if cli:
-            df = pd.DataFrame({"TNR(x)": FPR_plot, "TPR(y)": TPR_plot})
-    return fig, df
+            df = pd.DataFrame({"TNR(x)": FPR_plot, "TPR(y)": TPR_plot, "threshold": threshold_plot})
+    return fig, df, mirrored
 
 
 def bisect_population_w_threshold(pop_data, threshold_value, mirrored):
