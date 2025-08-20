@@ -467,7 +467,7 @@ def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves)
         ROCDataTable_data, ROCDataTable_columns, roc_index = utils.gen_roc_table(
             roc_column, pos_x, fitted_params[selected_column]["positive"]["norm"]
         )
-        roc_fig = utils.plot_roc_curve(roc_column, roc_index)
+        roc_fig, df_roc = utils.plot_roc_curve(roc_column, roc_index)
         roc_fig.update_layout(
             showlegend=False,
             xaxis=dict(range=[1.05, -0.05], title="Specificty (TNR)"),
