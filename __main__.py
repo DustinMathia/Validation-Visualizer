@@ -14,7 +14,7 @@ if __name__ == "__main__":
     roc_curves = make_roc_curve(labeled_data)
     roc_column = roc_curves.get(args.column)
 
-    _, df_roc = plot_roc_curve(roc_column, 0)
+    _, df_roc = plot_roc_curve(roc_column, 0, True)
     df_output = df_roc.drop_duplicates()
 
     output_file = os.path.splitext(args.input_file)[0]+"."+args.column+".roc"+".tsv"

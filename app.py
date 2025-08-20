@@ -177,7 +177,9 @@ def store_files(upload_contents, upload_filenames, uploaded_files_list):
 
                 # Check for required Column
                 if "reference_result" not in df_file.columns:
-                    warnings.append(f"Warning: No Column 'reference_result' in {filename}")
+                    warnings.append(
+                        f"Warning: No Column 'reference_result' in {filename}"
+                    )
                 else:
                     if (
                         not df_file["reference_result"]
@@ -467,7 +469,7 @@ def update_roc_plot_and_table(selected_column, pos_x, fitted_params, roc_curves)
         ROCDataTable_data, ROCDataTable_columns, roc_index = utils.gen_roc_table(
             roc_column, pos_x, fitted_params[selected_column]["positive"]["norm"]
         )
-        roc_fig, df_roc = utils.plot_roc_curve(roc_column, roc_index)
+        roc_fig, df_roc = utils.plot_roc_curve(roc_column, roc_index, False)
         roc_fig.update_layout(
             showlegend=False,
             xaxis=dict(range=[1.05, -0.05], title="Specificty (TNR)"),
@@ -1027,9 +1029,7 @@ def update_graph_and_cache(
                 )
 
         # Comment for cache func
-        if (slider_value is not None
-            and pos_fit_dist != "none"
-            and pos_fit_dist):
+        if slider_value is not None and pos_fit_dist != "none" and pos_fit_dist:
             fig.add_vline(
                 x=slider_value,
                 line_width=3,
@@ -1043,7 +1043,14 @@ def update_graph_and_cache(
             ),
 
         fig.update_yaxes(showticklabels=False, row=2, col=1)
-        fig.update_xaxes(range=[range_value[0], range_value[1]], showticklabels=True, ticks="inside", nticks=10, row=1, col=1)
+        fig.update_xaxes(
+            range=[range_value[0], range_value[1]],
+            showticklabels=True,
+            ticks="inside",
+            nticks=10,
+            row=1,
+            col=1,
+        )
         fig.update_xaxes(range=[range_value[0], range_value[1]], row=2, col=1)
         fig.update_layout(
             margin=dict(l=20, r=20, t=0, b=0),

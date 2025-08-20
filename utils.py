@@ -259,7 +259,7 @@ no_fig.add_annotation(
 no_fig.update_layout(xaxis={"visible": False}, yaxis={"visible": False})
 
 
-def plot_roc_curve(roc_data, threshold_index):
+def plot_roc_curve(roc_data, threshold_index, cli):
     population_data = roc_data["population_data"]
     total_positive = roc_data["total_positive"]
     total_negative = roc_data["total_negative"]
@@ -368,8 +368,9 @@ def plot_roc_curve(roc_data, threshold_index):
                 + "Specificity (1-FPR): %{x:.2f}",
             )
         )
-
-        df = pd.DataFrame({"TNR(x)": FPR_plot, "TPR(y)": TPR_plot})
+        df = None
+        if cli:
+            df = pd.DataFrame({"TNR(x)": FPR_plot, "TPR(y)": TPR_plot})
     return fig, df
 
 
