@@ -314,8 +314,8 @@ def plot_roc_curve(roc_data, threshold_index):
             thresh_pt_x = 1
             thresh_pt_y = 0
         else:
-            thresh_pt_x = FPR_plot[threshold_index + 0]
-            thresh_pt_y = TPR_plot[threshold_index + 0]
+            thresh_pt_x = FPR_plot[threshold_index + 1]
+            thresh_pt_y = TPR_plot[threshold_index + 1]
 
         threshold = population_data[threshold_index][0]
 
@@ -378,7 +378,7 @@ def bisect_population_w_threshold(pop_data, threshold_value, mirrored):
     # And all `a[k]` for `k >= i` have `a[k] >= x`.
     # This `i` directly tells us how many elements are strictly less than `threshold_value`.
     if mirrored:
-        index = bisect.bisect_right(pop_data, threshold_value) #idk but it works so
+        index = bisect.bisect_right(pop_data, threshold_value)-1 #idk but it works so
     else:
         index = bisect.bisect_left(pop_data, threshold_value)
     return index
@@ -434,6 +434,11 @@ def gen_roc_table(roc_data, threshold_value, norm_params):
         if roc_data["total_unknown"] is not None
         else 0
     )
+
+    if mirrored:
+        tp_val, fn_val = fn_val, tp_val
+        fp_val, tn_val = tn_val, fp_val
+        up_val, un_val = un_val, up_val
 
     tpr_val = (
         round(tp_val / roc_data["total_positive"], 2)
