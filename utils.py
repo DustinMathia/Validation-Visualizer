@@ -299,8 +299,6 @@ def plot_roc_curve(roc_data, threshold_index):
         FPR_plot = _mirrored_FPR_plot
 
         threshold_plot.append(population_data[-1][0])
-        #threshold_plot.reverse()
-        #population_data.reverse()
 
         thresh_pt_x = 0
         thresh_pt_y = 0

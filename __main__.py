@@ -10,5 +10,13 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     df_input = pd.read_csv(args.input_file, sep="\t")
+    labeled_data = label_data(df_input)
+    roc_curves = make_roc_curve(labeled_data)
+    roc_column = roc_curves.get(args.column)
 
-    print(df_input)
+    _, df_roc = plot_roc_curve(roc_column, 0)
+    df_output = df_roc.drop_duplicates()
+
+    output_file = os.path.splitext(args.input_file)[0]+"."+args.column+".roc"+".tsv"
+    df_output.to_csv(output_file, sep="\t", index=None)
+    print(df_output.to_string(index=False))
